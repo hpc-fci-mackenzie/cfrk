@@ -87,10 +87,10 @@ void kmer_main(struct read *rd, lint nN, lint nS, ushort k, ushort device)
    if ( cudaMalloc    ((void**)&d_Freq, size[3]) != cudaSuccess) printf("\nErro6!\n");
    puts(cudaGetErrorString(cudaGetLastError()));
 
-   if ( cudaMemset    (d_Freq, 0, size[3]) != cudaSuccess) printf("\nErro7\n");
-   puts(cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMemset    (d_Index, -1, size[3]) != cudaSuccess) printf("\nErro8\n");
-   puts(cudaGetErrorString(cudaGetLastError()));
+   //if ( cudaMemset    (d_Freq, 0, size[3]) != cudaSuccess) printf("\nErro7\n");
+   //puts(cudaGetErrorString(cudaGetLastError()));
+   //if ( cudaMemset    (d_Index, -1, size[3]) != cudaSuccess) printf("\nErro8\n");
+   //puts(cudaGetErrorString(cudaGetLastError()));
 
 //************************************************
    block[0] = maxThreadDim;
@@ -135,8 +135,8 @@ void kmer_main(struct read *rd, lint nN, lint nS, ushort k, ushort device)
 
 //************************************************
 
-   //SetMatrix<<<grid[0], block[0]>>>(d_Index, offset[0], -1);
-   //SetMatrix<<<nS, POW(k)>>>(d_Freq, offset[0], 0);
+   SetMatrix<<<grid[0], block[0]>>>(d_Index, offset[0], -1);
+   SetMatrix<<<nS, POW(k)>>>(d_Freq, offset[0], 0);
    //cudaDeviceSynchronize();
    ComputeIndex<<<grid[0], block[0]>>>(d_Seq, d_Index, k, nN, offset[0]);
    puts(cudaGetErrorString(cudaGetLastError()));
@@ -147,7 +147,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, ushort k, ushort device)
    cudaMemcpy(Freq, d_Freq, size[3], cudaMemcpyDeviceToHost);
    puts(cudaGetErrorString(cudaGetLastError()));
 
-   int cont = 0;
+/*   int cont = 0;
    int cont_seq = 0;
    for (int i = 0; i < (nS*fourk); i++)
    {
@@ -161,7 +161,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, ushort k, ushort device)
       cont++;
    }
    printf("\n");
-
+*/
 //************************************************
    cudaFree(d_Seq);
    cudaFree(d_Freq);
