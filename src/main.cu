@@ -80,7 +80,7 @@ return chunk;
 int main(int argc, char* argv[])
 {
 
-   ushort k;
+   int k;
    int device;
    lint gnN, gnS, nN, nS, chunkSize = 2048;
    int devCount;
@@ -113,17 +113,17 @@ int main(int argc, char* argv[])
    printf("\n\t\tReading time: %ld\n", (et-st));
 
    int nChunk = floor(gnS/chunkSize);
-   struct read *chunk[nChunk+1];
+   struct read *chunk;
    for (int i = 0; i < nChunk; i++)
    {
-      chunk[i] = SelectChunk(rd, chunkSize, i, gnS, &nS, gnN, &nN);
-      kmer_main(chunk[i], nN, nS, k, device);
+      chunk = SelectChunk(rd, chunkSize, i, gnS, &nS, gnN, &nN);
+      kmer_main(chunk, nN, nS, k, device);
       //cudaDeviceReset();
    }
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
-   chunk[nChunk] = SelectChunk(rd, chunkRemain, nChunk, gnS, &nS, gnN, &nN);
+   chunk = SelectChunk(rd, chunkRemain, nChunk, gnS, &nS, gnN, &nN);
    printf("\nnS: %ld, nN: %ld, chunkRemain: %d\n", nS, nN, chunkRemain);
-   kmer_main(chunk[nChunk], nN, nS, k, device);
+   kmer_main(chunk, nN, nS, k, device);
 
 return 0;
 }

@@ -3,7 +3,7 @@
 #include "tipos.h"
 
 //Set Matrix values
-__global__ void SetMatrix(int *Mat, ushort offset, int val)
+__global__ void SetMatrix(int *Mat, ushort offset, int val, int nF)
 {
    lint idx = threadIdx.x + (blockDim.x * blockIdx.x);
 
@@ -12,12 +12,13 @@ __global__ void SetMatrix(int *Mat, ushort offset, int val)
 
    for(lint id = start; id < end; id++)
    {
-      Mat[idx] = val;
+      if (id < nF)
+         Mat[idx] = val;
    }
 }
 
 //Compute k-mer index
-__global__ void ComputeIndex(short *Seq, int *Index, const ushort k, lint nN, ushort offset)
+__global__ void ComputeIndex(short *Seq, int *Index, const int k, lint nN, ushort offset)
 {
    lint idx = threadIdx.x + (blockDim.x * blockIdx.x);
 
