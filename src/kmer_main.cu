@@ -6,23 +6,11 @@
 #include "tipos.h"
 #include "kmer.cuh"
 
-void DeviceInfo(uint8_t device, lint *maxGridSize, lint *maxThreadDim, lint *deviceMemory)
+void GetDeviceProp(uint8_t device, lint *maxGridSize, lint *maxThreadDim, lint *deviceMemory)
 {
    cudaDeviceProp prop;
 
    cudaGetDeviceProperties(&prop, device);
-
-   printf("\n\n***** Device information *****\n\n");
-
-   printf("\tId: %d\n", device);
-   printf("\tName: %s\n", prop.name);
-   printf("\tTotal global memory: %ld\n", prop.totalGlobalMem);
-   printf("\tMax grid size: %d, %d, %d\n", prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
-   printf("\tMax thread dim: %d, %d, %d\n", prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
-   printf("\tWarp size: %d\n", prop.warpSize);
-   printf("\tMax threads per multiprocessor: %d\n", prop.maxThreadsPerMultiProcessor);
-
-   printf("\n************************************\n\n");
 
    *maxThreadDim = prop.maxThreadsDim[0];
    *maxGridSize = prop.maxGridSize[0];
@@ -48,8 +36,8 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    fourk = POW(k);
 
    cudaSetDevice(device);
-   DeviceInfo(device, &maxGridSize, &maxThreadDim, &deviceMemory);
-   printf("\nnS: %ld, nN: %ld\n", nS, nN);
+   GetDeviceProp(device, &maxGridSize, &maxThreadDim, &deviceMemory);
+   printf("\nnS: %ld, nN: %ld, POW(k): %d\n", nS, nN, fourk);
 
 //---------------------------------------------------------------------------
    size[0] = nN * sizeof(short);// d_Seq and Seq size
@@ -157,7 +145,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
       if (i % fourk == 0)
       {
          cont = 0;
-         printf("%d\n", cont_seq);
+         printf("> %d\n", cont_seq);
          cont_seq++;
       }
       if (Freq[i] != 0)

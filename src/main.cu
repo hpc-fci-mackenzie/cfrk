@@ -1,9 +1,29 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <math.h>
+#include <stdint.h>
 #include "kmer.cuh"
 #include "tipos.h"
 #include "fastaIO.h"
+
+void DeviceInfo(uint8_t device)
+{
+   cudaDeviceProp prop;
+
+   cudaGetDeviceProperties(&prop, device);
+
+   printf("\n\n***** Device information *****\n\n");
+
+   printf("\tId: %d\n", device);
+   printf("\tName: %s\n", prop.name);
+   printf("\tTotal global memory: %ld\n", prop.totalGlobalMem);
+   printf("\tMax grid size: %d, %d, %d\n", prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
+   printf("\tMax thread dim: %d, %d, %d\n", prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
+   printf("\tWarp size: %d\n", prop.warpSize);
+   printf("\tMax threads per multiprocessor: %d\n", prop.maxThreadsPerMultiProcessor);
+
+   printf("\n************************************\n\n");
+}
 
 int SelectDevice(int devCount)
 {
@@ -82,12 +102,12 @@ int main(int argc, char* argv[])
 
    int k;
    int device;
-   lint gnN, gnS, nN, nS, chunkSize = 2048;
+   lint gnN, gnS, nN, nS, chunkSize = 4096;
    int devCount;
 
    if ( argc < 3)
    {
-      printf("Usage: ./kmer [dataset.fasta] [k] <chunkSize: Default 2048>");
+      printf("Usage: ./kmer [dataset.fasta] [k] <chunkSize: Default 4096>");
       return 1;
    }
 
@@ -99,6 +119,7 @@ int main(int argc, char* argv[])
 
    cudaGetDeviceCount(&devCount);
    device = SelectDevice(devCount);
+   DeviceInfo(device);
 
    printf("\ndataset: %s, k: %d, chunkSize: %d\n", argv[1], k, chunkSize);
 
@@ -118,6 +139,10 @@ int main(int argc, char* argv[])
    {
       chunk = SelectChunk(rd, chunkSize, i, gnS, &nS, gnN, &nN);
       kmer_main(chunk, nN, nS, k, device);
+      cudaFree(chunk->data);
+      cudaFree(chunk->length);
+      cudaFree(chunk->start);
+      cudaFree(chunk);
       //cudaDeviceReset();
    }
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
