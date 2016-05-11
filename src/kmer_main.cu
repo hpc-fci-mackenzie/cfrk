@@ -20,7 +20,7 @@ void GetDeviceProp(uint8_t device, lint *maxGridSize, lint *maxThreadDim, lint *
 void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
 {
 
-   int *d_Index;// Index vector
+   int *d_Index, *Index;// Index vector
    short *d_Seq;// Seq matrix
    int *Freq, *d_Freq;// Frequence vector
    int fourk;// 4 power k
@@ -57,6 +57,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    if ( cudaMalloc    ((void**)&d_Seq, size[0]) != cudaSuccess) printf("\nErro1!\n");
    //puts(cudaGetErrorString(cudaGetLastError()));
    if ( cudaMalloc    ((void**)&d_Index, size[1]) != cudaSuccess) printf("\nErro2!\n");
+   if ( cudaMallocHost((void**)&Index, size[1]) != cudaSuccess) printf("\nErro2!\n");
    //puts(cudaGetErrorString(cudaGetLastError()));
    if ( cudaMalloc    ((void**)&d_start, size[2]) != cudaSuccess) printf("\nErro3!\n");
    //puts(cudaGetErrorString(cudaGetLastError()));
@@ -74,7 +75,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
 
 //************************************************
    block[0] = maxThreadDim;
-   grid[0] = floor( nN / block[0] );
+   grid[0] = floor(nN / block[0]) + 1;
    if (grid[0] > maxGridSize)
    {
       grid[0] = maxGridSize;
@@ -82,6 +83,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    }
    //printf("grid: %d\n", grid[0]);
    //printf("block: %d\n", block[0]);
+   //printf("offset: %d\n", offset[0]);
 
    block[1] = maxThreadDim;
    grid[1] = (nS / block[1]) + 1;
@@ -136,8 +138,14 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    //puts(cudaGetErrorString(cudaGetLastError()));
 
    cudaMemcpy(Freq, d_Freq, size[3], cudaMemcpyDeviceToHost);
+   cudaMemcpy(Index, d_Index, size[1], cudaMemcpyDeviceToHost);
    //puts(cudaGetErrorString(cudaGetLastError()));
-
+/*
+   for (int i = 0; i < nN; i++)
+   {
+      printf("%d: %d\n", i, Index[i]);
+   }
+*/
    int cont = 0;
    int cont_seq = 0;
    for (int i = 0; i < (nS*fourk); i++)
@@ -145,7 +153,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
       if (i % fourk == 0)
       {
          cont = 0;
-         printf("> %d\n", cont_seq);
+         printf("> %d\n", rd->length[cont_seq]);
          cont_seq++;
       }
       if (Freq[i] != 0)

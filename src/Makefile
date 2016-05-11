@@ -1,4 +1,4 @@
-NVCCFLAGS=-lm -m64 -arch=sm_35 -O3
+NVCCFLAGS=-lm -m64 -arch=sm_20 -O3
 
 default: kmer
 

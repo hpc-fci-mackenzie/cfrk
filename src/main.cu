@@ -52,20 +52,21 @@ int SelectDevice(int devCount)
 return device;
 }
 
-struct read* SelectChunk(struct read *rd, ushort chunkSize, ushort it, lint gnS, lint *nS, lint gnN, lint *nN)
+struct read* SelectChunk(struct read *rd, ushort chunkSize, ushort it, lint max, lint gnS, lint *nS, lint gnN, lint *nN)
 {
    struct read *chunk;
    int i;
    lint length = 0;
 
    // Size to be allocated
-   for (i = 0; i < chunkSize; i++)
+   for (i = 0; i < max; i++)
    {
       int id = chunkSize*it + i;
       if (id > gnS-1)
       {
          break;
       }
+      //printf("id: %d\n", id);
       length += rd->length[id]+1;
    }
 
@@ -85,7 +86,7 @@ struct read* SelectChunk(struct read *rd, ushort chunkSize, ushort it, lint gnS,
    chunk->length[0] = rd->length[chunkSize*it];
    chunk->start[0] = 0;
    // Copy start and length
-   for (i = 1; i < chunkSize; i++)
+   for (i = 1; i < max; i++)
    {
       int id = chunkSize*it + i;
       chunk->length[i] = rd->length[id];
@@ -93,7 +94,7 @@ struct read* SelectChunk(struct read *rd, ushort chunkSize, ushort it, lint gnS,
    }
 
    *nN = length;
-   *nS = chunkSize;
+   *nS = max;
 return chunk;
 }
 
@@ -135,19 +136,19 @@ int main(int argc, char* argv[])
 
    int nChunk = floor(gnS/chunkSize);
    struct read *chunk;
-   for (int i = 0; i < nChunk; i++)
+   int i = 0;
+   for (i = 0; i < nChunk; i++)
    {
-      chunk = SelectChunk(rd, chunkSize, i, gnS, &nS, gnN, &nN);
+      chunk = SelectChunk(rd, chunkSize, i, chunkSize, gnS, &nS, gnN, &nN);
       kmer_main(chunk, nN, nS, k, device);
       cudaFree(chunk->data);
       cudaFree(chunk->length);
       cudaFree(chunk->start);
       cudaFree(chunk);
-      //cudaDeviceReset();
    }
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
-   chunk = SelectChunk(rd, chunkRemain, nChunk, gnS, &nS, gnN, &nN);
-   printf("\nnS: %ld, nN: %ld, chunkRemain: %d\n", nS, nN, chunkRemain);
+   chunk = SelectChunk(rd, chunkSize, nChunk, chunkRemain, gnS, &nS, gnN, &nN);
+   printf("\nnS: %ld, nN: %ld, chunkRemain: %d, it: %d\n", nS, nN, chunkRemain, nChunk);
    kmer_main(chunk, nN, nS, k, device);
 
 return 0;
