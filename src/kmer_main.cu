@@ -132,9 +132,9 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    //puts(cudaGetErrorString(cudaGetLastError()));
    ComputeIndex<<<grid[0], block[0]>>>(d_Seq, d_Index, k, nN, offset[0]);
    //puts(cudaGetErrorString(cudaGetLastError()));
-   ComputeFreq<<<grid[1], block[1]>>>(d_Index, d_Freq, d_start, d_length, offset[1], fourk, nS, nN);
+   //ComputeFreq<<<grid[1], block[1]>>>(d_Index, d_Freq, d_start, d_length, offset[1], fourk, nS, nN);
    //puts(cudaGetErrorString(cudaGetLastError()));
-   //ComputeFreqNew<<<grid[2],block[2]>>>(d_Index, d_Freq, d_start, d_length, offset[2], fourk, nS);
+   ComputeFreqNew<<<grid[2],block[2]>>>(d_Index, d_Freq, d_start, d_length, offset[2], fourk, nS);
    //puts(cudaGetErrorString(cudaGetLastError()));
 
    cudaMemcpy(Freq, d_Freq, size[3], cudaMemcpyDeviceToHost);
