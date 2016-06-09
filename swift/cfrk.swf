@@ -1,0 +1,20 @@
+type file;
+
+app (file out) CFRK (file dataset, int k, int chunkSize)
+{
+   cfrk filename(dataset) k chunkSize stdout=filename(out);
+}
+
+int n = toInt(arg("n"));
+int k = toInt(arg("k", "2"));
+int chunkSize = toInt(arg("chunkSize", "4096"));
+string dataset_dir = arg("dataset-dir");
+string dataset_prefix = arg("dataset-prefix");
+string out_dir = arg("out-dir", ".");
+
+foreach i in [0:n-1]
+{
+   file dataset <single_file_mapper; file=strcat(dataset_dir, "/", dataset_prefix, "_", i, ".fasta")>;
+   file out <single_file_mapper; file=strcat(out_dir, "/", dataset_prefix, "_", i,".cfrk")>;
+   out = CFRK(dataset, k, chunkSize);
+}
