@@ -37,7 +37,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
 
    cudaSetDevice(device);
    GetDeviceProp(device, &maxGridSize, &maxThreadDim, &deviceMemory);
-   printf("\nnS: %ld, nN: %ld, POW(k): %d\n", nS, nN, fourk);
+   //printf("\nnS: %ld, nN: %ld, POW(k): %d\n", nS, nN, fourk);
 
 //---------------------------------------------------------------------------
    size[0] = nN * sizeof(short);// d_Seq and Seq size
@@ -145,7 +145,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    {
       printf("%d: %d\n", i, Index[i]);
    }
-*/
+
    int cont = 0;
    int cont_seq = 0;
    for (int i = 0; i < (nS*fourk); i++)
@@ -163,7 +163,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
       cont++;
    }
    printf("\n");
-
+*/
 //************************************************
    cudaFree(d_Seq);
    cudaFree(d_Freq);
@@ -173,5 +173,5 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    cudaFree(Freq);
 //---------------------------------------------------------------------------
 
-   printf("\nFim kmer_main\n");
+   //printf("\nFim kmer_main\n");
 }

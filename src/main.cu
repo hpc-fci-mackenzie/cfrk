@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
    lint gnN, gnS, nN, nS, chunkSize = 4096;
    int devCount;
 
-   if ( argc < 4)
+   if ( argc < 3)
    {
       printf("Usage: ./kmer [dataset.fasta] [k] <chunkSize: Default 4096>");
       return 1;
