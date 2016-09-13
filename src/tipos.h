@@ -12,14 +12,6 @@ typedef unsigned int uint;
 //0 disabled; 1 enable
 const int DBG = 0;
 
-struct dic// Dictionary
-{
-   int *index;// Index of combination
-   int *freq;// Frequency of repetition
-   int *id_pos;// Index on the pos vector
-   int *pos;// Where index appears
-};
-
 struct read// Used to read sequences
 {
    short *data;

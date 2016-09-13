@@ -66,7 +66,6 @@ struct read* SelectChunk(struct read *rd, ushort chunkSize, ushort it, lint max,
       {
          break;
       }
-      //printf("id: %d\n", id);
       length += rd->length[id]+1;
    }
 
@@ -85,6 +84,7 @@ struct read* SelectChunk(struct read *rd, ushort chunkSize, ushort it, lint max,
 
    chunk->length[0] = rd->length[chunkSize*it];
    chunk->start[0] = 0;
+
    // Copy start and length
    for (i = 1; i < max; i++)
    {
@@ -148,7 +148,6 @@ int main(int argc, char* argv[])
    }
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
    chunk = SelectChunk(rd, chunkSize, nChunk, chunkRemain, gnS, &nS, gnN, &nN);
-   printf("\nnS: %ld, nN: %ld, chunkRemain: %d, it: %d\n", nS, nN, chunkRemain, nChunk);
    kmer_main(chunk, nN, nS, k, device);
 
 return 0;

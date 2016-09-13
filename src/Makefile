@@ -1,8 +1,8 @@
 NVCCFLAGS=-lm -m64 -arch=sm_35 -O3
 
-default: kmer split serial
+default: cfrk split serial
 
-kmer:
+cfrk:
 	nvcc $(NVCCFLAGS) kmer_kernel.cu -lz -c
 	nvcc $(NVCCFLAGS) kmer_main.cu -lz -c
 	nvcc $(NVCCFLAGS) main.cu -c

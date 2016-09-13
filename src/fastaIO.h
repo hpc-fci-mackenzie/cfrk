@@ -117,7 +117,6 @@ void ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, ushort 
    
    gzclose(fp);
 
-   //return rd;
 }
 
 #endif
