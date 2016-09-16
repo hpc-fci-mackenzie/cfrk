@@ -60,7 +60,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    GetDeviceProp(device, &maxGridSize, &maxThreadDim, &deviceMemory);
 
 //---------------------------------------------------------------------------
-   size[0] = nN * sizeof(short);// d_Seq and Seq size
+   size[0] = nN * sizeof(char);// d_Seq and Seq size
    size[1] = nN * sizeof(int); // d_Index and Index size
    size[2] = nS * sizeof(int);  // d_start and d_length
    size[3] = nS * fourk * sizeof(int);// Freq and d_Freq

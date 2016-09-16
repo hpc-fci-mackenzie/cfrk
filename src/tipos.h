@@ -14,7 +14,7 @@ const int DBG = 0;
 
 struct read// Used to read sequences
 {
-   short *data;
+   char *data;
    int *length;
    int *start;
    struct read *next;
@@ -22,7 +22,7 @@ struct read// Used to read sequences
 
 struct tmp_data// Used to auxiliate the struct read
 {
-   short *data;
+   char *data;
    uint length;
    struct tmp_data *next;
 };

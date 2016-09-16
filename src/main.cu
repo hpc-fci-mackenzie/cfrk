@@ -70,7 +70,7 @@ struct read* SelectChunk(struct read *rd, ushort chunkSize, ushort it, lint max,
    }
 
    cudaMallocHost((void**)&chunk, sizeof(struct read));
-   cudaMallocHost((void**)&chunk->data, sizeof(short)*length);
+   cudaMallocHost((void**)&chunk->data, sizeof(char)*length);
    cudaMallocHost((void**)&chunk->length, sizeof(int)*chunkSize);
    cudaMallocHost((void**)&chunk->start, sizeof(int)*chunkSize);
 
@@ -120,16 +120,16 @@ int main(int argc, char* argv[])
 
    cudaGetDeviceCount(&devCount);
    device = SelectDevice(devCount);
-   DeviceInfo(device);
+   //DeviceInfo(device);
 
-   printf("\ndataset: %s, k: %d, chunkSize: %d\n", argv[1], k, chunkSize);
+   //printf("\ndataset: %s, k: %d, chunkSize: %d\n", argv[1], k, chunkSize);
 
    lint st = time(NULL);
-   puts("\n\n\t\tReading seqs!!!");
+   //puts("\n\n\t\tReading seqs!!!");
    struct read *rd;
    cudaMallocHost((void**)&rd, sizeof(struct read));
    ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
-   printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
+   //printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
    lint et = time(NULL);
 
    printf("\n\t\tReading time: %ld\n", (et-st));

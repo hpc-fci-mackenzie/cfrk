@@ -20,13 +20,13 @@ void ProcessTmpData(struct tmp_data *tdfirst, struct read *rd, lint nN, lint nS,
 
    if (flag == 0) //CPU
    {
-      rd->data = (short*)malloc(sizeof(short)*(nN + nS));
+      rd->data = (char*)malloc(sizeof(char)*(nN + nS));
       rd->length = (int*)malloc(sizeof(int)*nS);
       rd->start = (int*)malloc(sizeof(int)*nS);
    }
    if (flag == 1) //GPU
    {
-      cudaMallocHost((void**)&rd->data, sizeof(short)*(nN + nS) );
+      cudaMallocHost((void**)&rd->data, sizeof(char)*(nN + nS) );
       cudaMallocHost((void**)&rd->length, sizeof(int)*nS);
       cudaMallocHost((void**)&rd->start, sizeof(int)*nS);
    }
@@ -72,7 +72,7 @@ void ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, ushort 
       clock_gettime(CLOCK_REALTIME, &start);
       lnN += len; //Count the total number of nucleotides read
       lnS++;//count the total number of seqs read
-      td->data = (short*)malloc(sizeof(short) * len);
+      td->data = (char*)malloc(sizeof(char) * len);
       td->length = len;
       for (i = 0; i < len; i++)
       {   
