@@ -55,13 +55,14 @@ return device;
 struct read* SelectChunk(struct read *rd, ushort chunkSize, ushort it, lint max, lint gnS, lint *nS, lint gnN, lint *nN)
 {
    struct read *chunk;
-   int i;
+   lint i;
+   lint j;
    lint length = 0;
 
    // Size to be allocated
    for (i = 0; i < max; i++)
    {
-      int id = chunkSize*it + i;
+      lint id = chunkSize*it + i;
       if (id > gnS-1)
       {
          break;
@@ -72,14 +73,14 @@ struct read* SelectChunk(struct read *rd, ushort chunkSize, ushort it, lint max,
    cudaMallocHost((void**)&chunk, sizeof(struct read));
    cudaMallocHost((void**)&chunk->data, sizeof(char)*length);
    cudaMallocHost((void**)&chunk->length, sizeof(int)*chunkSize);
-   cudaMallocHost((void**)&chunk->start, sizeof(int)*chunkSize);
+   cudaMallocHost((void**)&chunk->start, sizeof(lint)*chunkSize);
 
    // Copy rd->data to chunk->data
    lint start = rd->start[chunkSize*it];
-   lint end = start + length;
-   for (i = start; i < end; i++)
+   lint end = start + (lint)length;
+   for (j = start; j < end; j++)
    {
-      chunk->data[i-start] = rd->data[i];
+      chunk->data[j-start] = rd->data[j];
    }
 
    chunk->length[0] = rd->length[chunkSize*it];
@@ -88,7 +89,7 @@ struct read* SelectChunk(struct read *rd, ushort chunkSize, ushort it, lint max,
    // Copy start and length
    for (i = 1; i < max; i++)
    {
-      int id = chunkSize*it + i;
+      lint id = chunkSize*it + i;
       chunk->length[i] = rd->length[id];
       chunk->start[i] = chunk->start[i-1]+(chunk->length[i-1]+1);
    }
@@ -120,16 +121,16 @@ int main(int argc, char* argv[])
 
    cudaGetDeviceCount(&devCount);
    device = SelectDevice(devCount);
-   //DeviceInfo(device);
+   DeviceInfo(device);
 
-   //printf("\ndataset: %s, k: %d, chunkSize: %d\n", argv[1], k, chunkSize);
+   printf("\ndataset: %s, k: %d, chunkSize: %d\n", argv[1], k, chunkSize);
 
    lint st = time(NULL);
-   //puts("\n\n\t\tReading seqs!!!");
+   puts("\n\n\t\tReading seqs!!!");
    struct read *rd;
    cudaMallocHost((void**)&rd, sizeof(struct read));
    ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
-   //printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
+   printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
    lint et = time(NULL);
 
    printf("\n\t\tReading time: %ld\n", (et-st));

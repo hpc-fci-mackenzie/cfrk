@@ -16,21 +16,19 @@ KSEQ_INIT(gzFile, gzread)
 void ProcessTmpData(struct tmp_data *tdfirst, struct read *rd, lint nN, lint nS, ushort flag)
 {
    struct tmp_data *aux = tdfirst;
-   int i, pos = 0, seq = 0;
-
+   lint i, pos = 0, seq = 0;
    if (flag == 0) //CPU
    {
       rd->data = (char*)malloc(sizeof(char)*(nN + nS));
       rd->length = (int*)malloc(sizeof(int)*nS);
-      rd->start = (int*)malloc(sizeof(int)*nS);
+      rd->start = (lint*)malloc(sizeof(lint)*nS);
    }
    if (flag == 1) //GPU
    {
-      cudaMallocHost((void**)&rd->data, sizeof(char)*(nN + nS) );
+      cudaMallocHost((void**)&rd->data, sizeof(char)*(nN + nS));
       cudaMallocHost((void**)&rd->length, sizeof(int)*nS);
-      cudaMallocHost((void**)&rd->start, sizeof(int)*nS);
+      cudaMallocHost((void**)&rd->start, sizeof(lint)*nS);
    }
-
    rd->start[0] = 0;
    while (aux != NULL && seq < nS)
    {
@@ -46,7 +44,6 @@ void ProcessTmpData(struct tmp_data *tdfirst, struct read *rd, lint nN, lint nS,
       rd->start[seq] = pos;
       aux = aux->next;
    }
-
 }
 
 //-------------------------------------------------------------------------

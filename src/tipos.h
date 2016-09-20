@@ -16,14 +16,14 @@ struct read// Used to read sequences
 {
    char *data;
    int *length;
-   int *start;
+   lint *start;
    struct read *next;
 };
 
 struct tmp_data// Used to auxiliate the struct read
 {
    char *data;
-   uint length;
+   int length;
    struct tmp_data *next;
 };
 
