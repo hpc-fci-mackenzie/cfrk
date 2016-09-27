@@ -104,12 +104,12 @@ int main(int argc, char* argv[])
 
    int k;
    int device;
-   lint gnN, gnS, nN, nS, chunkSize = 4096;
+   lint gnN, gnS, nN, nS, chunkSize = 8192;
    int devCount;
 
    if ( argc < 3)
    {
-      printf("Usage: ./kmer [dataset.fasta] [k] <chunkSize: Default 4096>");
+      printf("Usage: ./kmer [dataset.fasta] [k] <chunkSize: Default 8192>");
       return 1;
    }
 
@@ -142,10 +142,10 @@ int main(int argc, char* argv[])
    {
       chunk = SelectChunk(rd, chunkSize, i, chunkSize, gnS, &nS, gnN, &nN);
       kmer_main(chunk, nN, nS, k, device);
-      cudaFree(chunk->data);
-      cudaFree(chunk->length);
-      cudaFree(chunk->start);
-      cudaFree(chunk);
+      cudaFreeHost(chunk->data);
+      cudaFreeHost(chunk->length);
+      cudaFreeHost(chunk->start);
+      cudaFreeHost(chunk);
    }
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
    chunk = SelectChunk(rd, chunkSize, nChunk, chunkRemain, gnS, &nS, gnN, &nN);
