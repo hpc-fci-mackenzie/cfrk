@@ -76,11 +76,11 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    }
 //---------------------------------------------------------------------------
 
-   if ( cudaMalloc    ((void**)&d_Seq, size[0]) != cudaSuccess) printf("\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMalloc    ((void**)&d_Index, size[1]) != cudaSuccess) printf("\n[Error 2] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMalloc    ((void**)&d_start, size[4]) != cudaSuccess) printf("\n[Error 3] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMalloc    ((void**)&d_length, size[2]) != cudaSuccess) printf("\n[Error 4] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMalloc    ((void**)&d_Freq, size[3]) != cudaSuccess) printf("\n[Error 5] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMalloc ((void**)&d_Seq, size[0])    != cudaSuccess ) printf("\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMalloc ((void**)&d_Index, size[1])  != cudaSuccess ) printf("\n[Error 2] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMalloc ((void**)&d_start, size[4])  != cudaSuccess ) printf("\n[Error 3] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMalloc ((void**)&d_length, size[2]) != cudaSuccess ) printf("\n[Error 4] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMalloc ((void**)&d_Freq, size[3])   != cudaSuccess ) printf("\n[Error 5] %s\n", cudaGetErrorString(cudaGetLastError()));
 
 //************************************************
    block[0] = maxThreadDim;

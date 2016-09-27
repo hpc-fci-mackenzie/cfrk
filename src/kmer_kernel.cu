@@ -32,9 +32,10 @@ __global__ void ComputeIndex(char *Seq, int *Index, const int k, lint nN, ushort
       {
          for( lint i = 0; i < k; i++ )
          {
-            if (Seq[i + id] != -1) //Verifica se ha alguem que nao deve ser processado
+            char nuc = Seq[i + id];
+            if (nuc != -1) //Verifica se ha alguem que nao deve ser processado
             {
-               index += Seq[i + id] * POW( (k - 1) - i );
+               index += nuc * powf(4, ((k-1)-i));
             }
             else
             {
