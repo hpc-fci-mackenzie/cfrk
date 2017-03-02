@@ -121,23 +121,24 @@ int main(int argc, char* argv[])
 
    cudaGetDeviceCount(&devCount);
    device = SelectDevice(devCount);
-   DeviceInfo(device);
+   //DeviceInfo(device);
 
-   printf("\ndataset: %s, k: %d, chunkSize: %d\n", argv[1], k, chunkSize);
+   //printf("\ndataset: %s, k: %d, chunkSize: %d\n", argv[1], k, chunkSize);
 
    lint st = time(NULL);
-   puts("\n\n\t\tReading seqs!!!");
+   //puts("\n\n\t\tReading seqs!!!");
    struct read *rd;
    cudaMallocHost((void**)&rd, sizeof(struct read));
    ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
-   printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
+   //printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
    lint et = time(NULL);
 
-   printf("\n\t\tReading time: %ld\n", (et-st));
+   //printf("\n\t\tReading time: %ld\n", (et-st));
 
    int nChunk = floor(gnS/chunkSize);
    struct read *chunk;
    int i = 0;
+
    for (i = 0; i < nChunk; i++)
    {
       chunk = SelectChunk(rd, chunkSize, i, chunkSize, gnS, &nS, gnN, &nN);

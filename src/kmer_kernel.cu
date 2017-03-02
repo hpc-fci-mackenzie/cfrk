@@ -82,9 +82,8 @@ __global__ void ComputeFreqNew(int *Index, int *Freq, lint *start, int *length, 
    {
       int idx = start[i] + threadIdx.x;
       int id_freq = (fourk * i) + Index[idx];
-      if (threadIdx.x < length[i])
+      if (threadIdx.x < length[i]-1)
       {
-         //Freq[idx] = 1;
          atomicAdd(&Freq[id_freq], 1);
       }
    }
