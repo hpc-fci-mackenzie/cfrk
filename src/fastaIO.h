@@ -55,7 +55,7 @@ void ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, ushort 
    int len;
    lint lnN = 0, lnS = 0;
    int i;
-   char letter;
+   //char letter;
    struct timespec start, stop;
    double seconds;
 
@@ -73,21 +73,26 @@ void ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, ushort 
       td->length = len;
       for (i = 0; i < len; i++)
       {   
-         letter = toupper(seq->seq.s[i]);
-         switch( toupper(letter) )
+         //letter = toupper(seq->seq.s[i]);
+         switch(seq->seq.s[i])
          {   
+            case 'a':
             case 'A':
                td->data[i] = 0; break;
+            case 'c':
             case 'C':
                td->data[i] = 1; break;
+            case 'g':
             case 'G':
                td->data[i] = 2; break;
+            case 't':
             case 'T':
                td->data[i] = 3; break;
             default:
                td->data[i] = -1; break;
          }
       }
+
       aux = (struct tmp_data*)malloc(sizeof(struct tmp_data));
       td->next = aux;
       aux->next=NULL;

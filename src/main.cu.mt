@@ -1,3 +1,10 @@
+/*
+CFRK-MT - Contabilizador da Frequencia de Repetica de kmer (Multi GPU version)
+Developer: Fabricio Gomes Vilasboas
+Istitution: National Laboratory for Scientific Computing
+*/
+
+
 #include <stdio.h>
 #include <pthread.h>
 #include <math.h>
@@ -6,6 +13,14 @@
 #include "kmer.cuh"
 #include "tipos.h"
 #include "fastaIO.h"
+
+//*** Global Variables ***
+struct read *chunk;
+lint *nS, *nN;
+int offset;
+int device;
+int k;
+//************************
 
 void DeviceInfo(uint8_t device)
 {
@@ -154,11 +169,28 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
    }
 }
 
+void *LaunchKmer(void* threadId)
+{
+
+   lint tid = (lint)threadId;
+   int start = tid * offset;
+   int end = start+offset;
+
+   printf("\t\ttid: %d\n", tid);
+
+   int i = 0;
+   for (i = start; i < end; i++)
+   {
+      kmer_main(&chunk[i], nN[i], nS[i], k, device);
+      cudaFreeHost(chunk[i].data);
+      cudaFreeHost(chunk[i].length);
+      cudaFreeHost(chunk[i].start);
+   }
+}
+
 int main(int argc, char* argv[])
 {
 
-   int k;
-   int device;
    lint gnN, gnS, chunkSize = 8192;
    int devCount;
 
@@ -175,7 +207,6 @@ int main(int argc, char* argv[])
       chunkSize = atoi(argv[3]);
 
    cudaGetDeviceCount(&devCount);
-   device = SelectDevice(devCount);
    //DeviceInfo(device);
 
    printf("\ndataset: %s, k: %d, chunkSize: %d\n", argv[1], k, chunkSize);
@@ -191,19 +222,26 @@ int main(int argc, char* argv[])
    printf("\n\t\tReading time: %ld\n", (et-st));
 
    int nChunk = floor(gnS/chunkSize);
-   struct read *chunk;
-   lint nS[nChunk], nN[nChunk];
    int i = 0;
    cudaMallocHost((void**)&chunk, sizeof(struct read)*nChunk);
+   cudaMallocHost((void**)&nS, sizeof(lint)*nChunk);
+   cudaMallocHost((void**)&nN, sizeof(lint)*nChunk);
    SelectChunk(chunk, nChunk, rd, chunkSize, chunkSize, gnS, nS, gnN, nN);
 
-   for (i = 0; i < nChunk; i++)
+   device = SelectDevice(devCount);
+   offset = floor(nChunk/devCount);
+   pthread_t threads[devCount];
+   for (i = 0; i < devCount; i++)
    {
-      kmer_main(&chunk[i], nN[i], nS[i], k, device);
-      cudaFreeHost(chunk[i].data);
-      cudaFreeHost(chunk[i].length);
-      cudaFreeHost(chunk[i].start);
+      pthread_create(&threads[i], NULL, LaunchKmer, (void*)i);
    }
+
+   int threadRemain = nChunk - (offset*devCount);
+   if (threadRemain > 0)
+   {
+      kmer_main(&chunk[nChunk-1], nN[nChunk-1], nS[nChunk-1], k, device);
+   }
+
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
    lint rnS, rnN;
    chunk = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN);

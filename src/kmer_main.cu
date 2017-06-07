@@ -136,7 +136,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    if ( cudaMallocHost((void**)&Freq, size[3]) != cudaSuccess) printf("\n[Error 9] %s\n", cudaGetErrorString(cudaGetLastError()));
    if ( cudaMemcpy(Freq, d_Freq, size[3], cudaMemcpyDeviceToHost) != cudaSuccess) printf("\n[Error 10] %s\n", cudaGetErrorString(cudaGetLastError()));
 
-   PrintFreq(fourk, rd, Freq, nS);
+   //PrintFreq(fourk, rd, Freq, nS);
 
 //************************************************
    cudaFree(d_Seq);

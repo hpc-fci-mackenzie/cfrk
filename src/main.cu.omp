@@ -1,3 +1,9 @@
+/*
+CFRK-OpenMP - Contabilizador da Frequencia de Repetica de kmer (OpenMP version)
+Developer: Fabricio Gomes Vilasboas
+Istitution: National Laboratory for Scientific Computing
+*/
+
 #include <stdio.h>
 #include <pthread.h>
 #include <math.h>
