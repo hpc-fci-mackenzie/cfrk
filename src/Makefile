@@ -1,4 +1,4 @@
-NVCCFLAGS=-lm -m64 -arch=sm_35 -O3 # -maxrregcount 255
+NVCCFLAGS=-lm -m64 -arch=sm_35 -O3 --use_fast_math --default-stream per-thread --ptxas-options=-O3
 OMPFLAGS=-Xcompiler -fopenmp
 default: cfrk split serial
 
@@ -11,6 +11,6 @@ cfrk:
 split:
 	gcc -Wall -std=c99 -pedantic -o ../bin/fastasplitn fastasplitn.c
 serial:
-	nvcc serial.cu -o ../bin/serial -lz
+	nvcc $(NVCCFLAGS) serial.cu -o ../bin/serial -lz
 clean:
 	rm -f ../bin/* ./*.o

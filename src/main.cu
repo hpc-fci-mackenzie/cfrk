@@ -1,3 +1,9 @@
+/*
+CFRK-OpenMP - Contabilizador da Frequencia de Repetica de kmer (OpenMP version)
+Developer: Fabricio Gomes Vilasboas
+Istitution: National Laboratory for Scientific Computing
+*/
+
 #include <stdio.h>
 #include <pthread.h>
 #include <math.h>
@@ -141,7 +147,6 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
       chunk[it].length[0] = rd->length[chunkSize*it];
       chunk[it].start[0] = 0;
 
-      // Copy start and length
       for (i = 1; i < max; i++)
       {
          lint id = chunkSize*it + i;
