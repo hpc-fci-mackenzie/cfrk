@@ -167,16 +167,16 @@ int main(int argc, char* argv[])
    lint gnN, gnS, chunkSize = 8192;
    int devCount;
 
-   if ( argc < 3)
+   if ( argc < 4)
    {
-      printf("Usage: ./kmer [dataset.fasta] [k] <chunkSize: Default 8192>");
+      printf("Usage: ./kmer [dataset.fasta] [file_out.cfrk] [k] <chunkSize: Default 8192>");
       return 1;
    }
 
    cudaDeviceReset();
    
-   k = atoi(argv[2]);
-   if (argc == 4)
+   k = atoi(argv[3]);
+   if (argc == 5)
       chunkSize = atoi(argv[3]);
 
    cudaGetDeviceCount(&devCount);
@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
 
    for (i = 0; i < nChunk; i++)
    {
-      kmer_main(&chunk[i], nN[i], nS[i], k, device);
+      kmer_main(&chunk[i], nN[i], nS[i], k, device, argv[2]);
       cudaFreeHost(chunk[i].data);
       cudaFreeHost(chunk[i].length);
       cudaFreeHost(chunk[i].start);
@@ -212,7 +212,7 @@ int main(int argc, char* argv[])
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
    lint rnS, rnN;
    chunk = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN);
-   kmer_main(chunk, rnN, rnS, k, device);
+   kmer_main(chunk, rnN, rnS, k, device, argv[2]);
 
 return 0;
 }
