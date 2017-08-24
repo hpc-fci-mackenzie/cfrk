@@ -10,6 +10,7 @@ Istitution: National Laboratory for Scientific Computing
 #include <math.h>
 #include <stdint.h>
 #include <omp.h>
+#include <string.h>
 #include "kmer.cuh"
 #include "tipos.h"
 #include "fastaIO.h"
@@ -20,6 +21,7 @@ lint *nS, *nN;
 int offset;
 int device;
 int k;
+char file_out[512];
 //************************
 
 void DeviceInfo(uint8_t device)
@@ -178,14 +180,19 @@ void *LaunchKmer(void* threadId)
 
    printf("\t\ttid: %d\n", tid);
 
+   DeviceInfo(tid);
+
    int i = 0;
    for (i = start; i < end; i++)
    {
-      kmer_main(&chunk[i], nN[i], nS[i], k, device);
+      kmer_main(&chunk[i], nN[i], nS[i], k, device, file_out);
+      cudaStreamSynchronize(0);
       cudaFreeHost(chunk[i].data);
       cudaFreeHost(chunk[i].length);
       cudaFreeHost(chunk[i].start);
    }
+
+return NULL;
 }
 
 int main(int argc, char* argv[])
@@ -194,22 +201,23 @@ int main(int argc, char* argv[])
    lint gnN, gnS, chunkSize = 8192;
    int devCount;
 
-   if ( argc < 3)
+   if ( argc < 4)
    {
-      printf("Usage: ./kmer [dataset.fasta] [k] <chunkSize: Default 8192>");
+      printf("Usage: ./kmer [dataset.fasta] [file_out.cfrk] [k] <chunkSize: Default 8192>");
       return 1;
-   }
-
+   } 
    cudaDeviceReset();
    
-   k = atoi(argv[2]);
-   if (argc == 4)
+   k = atoi(argv[3]);
+   if (argc == 5)
       chunkSize = atoi(argv[3]);
 
    cudaGetDeviceCount(&devCount);
    //DeviceInfo(device);
 
-   printf("\ndataset: %s, k: %d, chunkSize: %d\n", argv[1], k, chunkSize);
+   strcpy(file_out, argv[2]);
+
+   printf("\ndataset: %s, out: %s, k: %d, chunkSize: %d\n", argv[1], file_out, k, chunkSize);
 
    lint st = time(NULL);
    puts("\n\n\t\tReading seqs!!!");
@@ -236,16 +244,21 @@ int main(int argc, char* argv[])
       pthread_create(&threads[i], NULL, LaunchKmer, (void*)i);
    }
 
+   for (i = 0; i < devCount; i++)
+   {
+      pthread_join(threads[i], NULL);
+   }
+
    int threadRemain = nChunk - (offset*devCount);
    if (threadRemain > 0)
    {
-      kmer_main(&chunk[nChunk-1], nN[nChunk-1], nS[nChunk-1], k, device);
+      kmer_main(&chunk[nChunk-1], nN[nChunk-1], nS[nChunk-1], k, device, file_out);
    }
 
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
    lint rnS, rnN;
    chunk = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN);
-   kmer_main(chunk, rnN, rnS, k, device);
+   kmer_main(chunk, rnN, rnS, k, device, file_out);
 
 return 0;
 }

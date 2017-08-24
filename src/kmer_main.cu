@@ -26,12 +26,12 @@ void PrintFreq(int fourk, struct read *rd, int *Freq, lint nS, char *fileOut)
          //printf("> %d\n", rd->length[cont_seq]);
          cont_seq++;
       }
-      //if (Freq[i] != 0)
-      //{
+      if (Freq[i] != 0)
+      {
          sprintf(str, "%d ", Freq[i]);
          //printf("%s", str);
          fwrite(str, sizeof(char), sizeof(str), out);
-      //}
+      }
       cont++;
    }
    fclose(out);
