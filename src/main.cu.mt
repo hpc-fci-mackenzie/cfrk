@@ -70,7 +70,7 @@ int SelectDevice(int devCount)
 return device;
 }
 
-struct read* SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lint max, lint gnS, lint *nS, lint gnN, lint *nN)
+struct read* SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lint max, lint gnS, lint *nS, lint gnN, lint *nN, int nt)
 {
    struct read *chunk;
    lint i;
@@ -96,9 +96,8 @@ struct read* SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lin
    // Copy rd->data to chunk->data
    lint start = rd->start[chunkSize*it];
    lint end = start + (lint)length;
-   omp_set_num_threads(12);
 
-   #pragma omp parallel for
+   #pragma omp parallel for num_threads(nt)
    for (j = start; j < end; j++)
    {
       chunk->data[j-start] = rd->data[j];
@@ -121,7 +120,7 @@ return chunk;
 }
 
 
-void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort chunkSize, lint max, lint gnS, lint *nS, lint gnN, lint *nN)
+void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort chunkSize, lint max, lint gnS, lint *nS, lint gnN, lint *nN, int nt)
 {
    lint i, j, it;
 
@@ -147,9 +146,7 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
       // Copy rd->data to chunk->data
       lint start = rd->start[chunkSize*it];
       lint end = start + (lint)length;
-
-      omp_set_num_threads(12);
-      #pragma omp parallel for
+      #pragma omp parallel for num_threads(nt)
       for (j = start; j < end; j++)
       {
          chunk[it].data[j-start] = rd->data[j];
@@ -200,17 +197,20 @@ int main(int argc, char* argv[])
 
    lint gnN, gnS, chunkSize = 8192;
    int devCount;
+   int nt = 12;
 
    if ( argc < 4)
    {
-      printf("Usage: ./kmer [dataset.fasta] [file_out.cfrk] [k] <chunkSize: Default 8192>");
+      printf("Usage: ./kmer [dataset.fasta] [file_out.cfrk] [k] <number of threads: Default 12> <chunkSize: Default 8192>");
       return 1;
    } 
    cudaDeviceReset();
    
    k = atoi(argv[3]);
    if (argc == 5)
-      chunkSize = atoi(argv[3]);
+      nt = atoi(argv[4]);
+   if (argc == 6)
+      chunkSize = atoi(argv[5]);
 
    cudaGetDeviceCount(&devCount);
    //DeviceInfo(device);
@@ -234,7 +234,7 @@ int main(int argc, char* argv[])
    cudaMallocHost((void**)&chunk, sizeof(struct read)*nChunk);
    cudaMallocHost((void**)&nS, sizeof(lint)*nChunk);
    cudaMallocHost((void**)&nN, sizeof(lint)*nChunk);
-   SelectChunk(chunk, nChunk, rd, chunkSize, chunkSize, gnS, nS, gnN, nN);
+   SelectChunk(chunk, nChunk, rd, chunkSize, chunkSize, gnS, nS, gnN, nN, nt);
 
    device = SelectDevice(devCount);
    offset = floor(nChunk/devCount);
@@ -257,7 +257,7 @@ int main(int argc, char* argv[])
 
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
    lint rnS, rnN;
-   chunk = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN);
+   chunk = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN, nt);
    kmer_main(chunk, rnN, rnS, k, device, file_out);
 
 return 0;
