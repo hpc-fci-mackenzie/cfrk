@@ -2,7 +2,7 @@
 #INTELFLAGS=-Xcompiler="-qopenmp -Ofast -pthread"
 NVCCFLAGS=-lm -m64 -arch=sm_50 --use_fast_math --default-stream per-thread --ptxas-options=-O3
 INTELFLAGS=-Xcompiler -fopenmp -lpthread
-default: cfrk split serial
+default: cfrk
 
 cfrk:
 	nvcc $(INTELFLAGS) $(NVCCFLAGS) kmer_kernel.cu -c

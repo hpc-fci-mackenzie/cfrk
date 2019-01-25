@@ -15,9 +15,8 @@ const int DBG = 0;
 struct seq
 {
    char *header;
-   char *seq;
+   char *data;
    int len;
-   struct seq *next;
 };
 
 struct read// Used to read sequences
@@ -27,13 +26,6 @@ struct read// Used to read sequences
    lint *start;
    int *Freq;
    struct read *next;
-};
-
-struct tmp_data// Used to auxiliate the struct read
-{
-   char *data;
-   int length;
-   struct tmp_data *next;
 };
 
 #endif

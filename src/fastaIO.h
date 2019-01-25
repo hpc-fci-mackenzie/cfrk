@@ -48,19 +48,19 @@ struct seq *ReadFasta(char *fileName, lint *nS)
        {  
           if (flag == 0)
           {
-             seq[count].seq = (char*)malloc(sizeof(char)*read);
-             strcat(seq[count].seq, line);
+             seq[count].data = (char*)malloc(sizeof(char)*read);
+             strcat(seq[count].data, line);
              flag = 1;
           }
           else
           {
-             oldRead = strlen(seq[count].seq);
+             oldRead = strlen(seq[count].data);
              aux = (char*)malloc(sizeof(char)*oldRead);
-             strcpy(aux, seq[count].seq);
-             seq[count].seq = NULL;
-             seq[count].seq = (char*)malloc(sizeof(char)*(read+oldRead));
-             strcat(seq[count].seq, aux);
-             strcat(seq[count].seq, line);
+             strcpy(aux, seq[count].data);
+             seq[count].data = NULL;
+             seq[count].data = (char*)malloc(sizeof(char)*(read+oldRead));
+             strcat(seq[count].data, aux);
+             strcat(seq[count].data, line);
              aux = NULL;
           }
        }
@@ -69,36 +69,28 @@ struct seq *ReadFasta(char *fileName, lint *nS)
 }
 
 //-------------------------------------------------------------------------------------------
-void ProcessTmpData(struct tmp_data *tdfirst, struct read *rd, lint nN, lint nS, ushort flag)
+void ProcessData(struct seq *seq, struct read *rd, lint nN, lint nS, ushort flag)
 {
-   struct tmp_data *aux = tdfirst;
-   lint i, pos = 0, seq = 0;
-   if (flag == 0) //CPU
-   {
-      rd->data = (char*)malloc(sizeof(char)*(nN + nS));
-      rd->length = (int*)malloc(sizeof(int)*nS);
-      rd->start = (lint*)malloc(sizeof(lint)*nS);
-   }
-   if (flag == 1) //GPU
-   {
-      cudaMallocHost((void**)&rd->data, sizeof(char)*(nN + nS));
-      cudaMallocHost((void**)&rd->length, sizeof(int)*nS);
-      cudaMallocHost((void**)&rd->start, sizeof(lint)*nS);
-   }
+   lint i, j, pos = 0, seqCount = 0;
+
+   cudaMallocHost((void**)&rd->data, sizeof(char)*(nN + nS));
+   cudaMallocHost((void**)&rd->length, sizeof(int)*nS);
+   cudaMallocHost((void**)&rd->start, sizeof(lint)*nS);
+
    rd->start[0] = 0;
-   while (aux != NULL && seq < nS)
+
+   for (j = 0; j < nS; j++)
    {
-      for(i = 0; i < aux->length; i++)
+      for(i = 0; i < seq[j].len; i++)
       {
-         rd->data[pos] = aux->data[i];
+         rd->data[pos] = seq[j].data[i];
          pos++;
       }
       rd->data[pos] = -1;
       pos++;
-      rd->length[seq] = aux->length;
-      seq++;
-      rd->start[seq] = pos;
-      aux = aux->next;
+      rd->length[seqCount] = seq[j].len;
+      seqCount++;
+      rd->start[seqCount] = pos;
    }
 }
 
@@ -106,51 +98,39 @@ void ProcessTmpData(struct tmp_data *tdfirst, struct read *rd, lint nN, lint nS,
 void ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, ushort flag)
 {
    struct seq *seq;
-   struct tmp_data *tdfirst = NULL, *td = NULL, *aux = NULL;
    int len;
    lint lnN = 0;
    int i, j;
 
    seq = ReadFasta(file, nS);
-   tdfirst = (struct tmp_data*)malloc(sizeof(struct tmp_data));
-   td = tdfirst;
-   td->next = NULL;
    for (i = 0; i < *nS; i++)
    {
-      len = strlen(seq[i].seq);
+      len = strlen(seq[i].data);
       lnN += len;
-      td->data = (char*)malloc(sizeof(char) * len);
-      td->length = len;
       for (j = 0; j < len; j++)
       {   
          //char letter = toupper(seq->seq.s[i]);
-         switch(seq->seq[j])
+         switch(seq->data[j])
          {   
             case 'a':
             case 'A':
-               td->data[j] = 0; break;
+               seq[i].data[j] = 0; break;
             case 'c':
             case 'C':
-               td->data[j] = 1; break;
+               seq[i].data[j] = 1; break;
             case 'g':
             case 'G':
-               td->data[j] = 2; break;
+               seq[i].data[j] = 2; break;
             case 't':
             case 'T':
-               td->data[j] = 3; break;
+               seq[i].data[j] = 3; break;
             default:
-               td->data[j] = -1; break;
+               seq[i].data[j] = -1; break;
          }
       }
-
-      aux = (struct tmp_data*)malloc(sizeof(struct tmp_data));
-      td->next = aux;
-      aux->next=NULL;
-      td = aux;
    }
 
-   ProcessTmpData(tdfirst, rd, lnN, *nS, flag);
-
+   ProcessData(seq, rd, lnN, *nS, flag);
 
    *nN = lnN + *nS;
    
