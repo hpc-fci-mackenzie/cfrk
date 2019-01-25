@@ -7,7 +7,6 @@
 #include <zlib.h>
 #include <time.h>
 #include <cuda.h>
-#include "kseq.h"
 #include "tipos.h"
 
 int GetNs(char *FileName)

@@ -5,14 +5,10 @@ INTELFLAGS=-Xcompiler -fopenmp -lpthread
 default: cfrk split serial
 
 cfrk:
-	nvcc $(INTELFLAGS) $(NVCCFLAGS) kmer_kernel.cu -lz -c
-	nvcc $(INTELFLAGS) $(NVCCFLAGS) kmer_main.cu -lz -c
+	nvcc $(INTELFLAGS) $(NVCCFLAGS) kmer_kernel.cu -c
+	nvcc $(INTELFLAGS) $(NVCCFLAGS) kmer_main.cu -c
 	nvcc main.cu $(INTELFLAGS) $(NVCCFLAGS) -c
-	nvcc main.o kmer_kernel.o kmer_main.o $(NVCCFLAGS) $(INTELFLAGS) -lz -o ../bin/cfrk
+	nvcc main.o kmer_kernel.o kmer_main.o $(NVCCFLAGS) $(INTELFLAGS) -o ../bin/cfrk
 	rm main.o kmer_main.o kmer_kernel.o
-split:
-	gcc -Wall -std=c99 -pedantic -o ../bin/fastasplitn fastasplitn.c
-serial:
-	nvcc $(NVCCFLAGS) serial.cu -o ../bin/serial -lz
 clean:
 	rm -f ../bin/* ./*.o
