@@ -12,6 +12,14 @@ typedef unsigned int uint;
 //0 disabled; 1 enable
 const int DBG = 0;
 
+struct seq
+{
+   char *header;
+   char *seq;
+   int len;
+   struct seq *next;
+};
+
 struct read// Used to read sequences
 {
    char *data;

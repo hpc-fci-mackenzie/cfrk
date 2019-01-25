@@ -10,7 +10,64 @@
 #include "kseq.h"
 #include "tipos.h"
 
-KSEQ_INIT(gzFile, gzread)
+int GetNs(char *FileName)
+{
+   char temp[64], cmd[512];
+   FILE *in;
+   strcpy(cmd, "grep -c \">\" ");
+   strcat(cmd, FileName);
+   in = popen(cmd, "r");
+   fgets(temp, 64, in);
+   fclose(in);
+   return atoi(temp);
+}
+
+struct seq *ReadFasta(char *fileName, lint *nS)
+{
+   FILE *fastaFile;
+   char *line = NULL, *aux;
+   size_t len = 0;
+   ssize_t read, oldRead;
+   struct seq *seq;
+   int count = -1, flag = 0; 
+
+   *nS = GetNs(fileName);
+   seq = (struct seq*)malloc(sizeof(struct seq) * *nS);
+       
+   if ((fastaFile = fopen(fileName, "r")) == NULL) exit(EXIT_FAILURE);
+          
+   while ((read = getline(&line, &len, fastaFile)) != -1)
+   {      
+       if (line[0] == '>')
+       {
+          count++;
+          seq[count].header = (char*)malloc(sizeof(char)*read);
+          strcpy(seq[count].header, line);
+          flag = 0;
+       }     
+       else  
+       {  
+          if (flag == 0)
+          {
+             seq[count].seq = (char*)malloc(sizeof(char)*read);
+             strcat(seq[count].seq, line);
+             flag = 1;
+          }
+          else
+          {
+             oldRead = strlen(seq[count].seq);
+             aux = (char*)malloc(sizeof(char)*oldRead);
+             strcpy(aux, seq[count].seq);
+             seq[count].seq = NULL;
+             seq[count].seq = (char*)malloc(sizeof(char)*(read+oldRead));
+             strcat(seq[count].seq, aux);
+             strcat(seq[count].seq, line);
+             aux = NULL;
+          }
+       }
+   }
+   return seq;
+}
 
 //-------------------------------------------------------------------------------------------
 void ProcessTmpData(struct tmp_data *tdfirst, struct read *rd, lint nN, lint nS, ushort flag)
@@ -49,46 +106,41 @@ void ProcessTmpData(struct tmp_data *tdfirst, struct read *rd, lint nN, lint nS,
 //-------------------------------------------------------------------------
 void ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, ushort flag)
 {
-   gzFile fp;
-   kseq_t *seq;
+   struct seq *seq;
    struct tmp_data *tdfirst = NULL, *td = NULL, *aux = NULL;
    int len;
-   lint lnN = 0, lnS = 0;
-   int i;
-   struct timespec start, stop;
-   double seconds;
+   lint lnN = 0;
+   int i, j;
 
-   fp = gzopen(file, "r");
-   seq = kseq_init(fp);
+   seq = ReadFasta(file, nS);
    tdfirst = (struct tmp_data*)malloc(sizeof(struct tmp_data));
    td = tdfirst;
    td->next = NULL;
-   while ((len = kseq_read(seq)) >= 0)
+   for (i = 0; i < *nS; i++)
    {
-      clock_gettime(CLOCK_REALTIME, &start);
-      lnN += len; //Count the total number of nucleotides read
-      lnS++;//count the total number of seqs read
+      len = strlen(seq[i].seq);
+      lnN += len;
       td->data = (char*)malloc(sizeof(char) * len);
       td->length = len;
-      for (i = 0; i < len; i++)
+      for (j = 0; j < len; j++)
       {   
          //char letter = toupper(seq->seq.s[i]);
-         switch(seq->seq.s[i])
+         switch(seq->seq[j])
          {   
             case 'a':
             case 'A':
-               td->data[i] = 0; break;
+               td->data[j] = 0; break;
             case 'c':
             case 'C':
-               td->data[i] = 1; break;
+               td->data[j] = 1; break;
             case 'g':
             case 'G':
-               td->data[i] = 2; break;
+               td->data[j] = 2; break;
             case 't':
             case 'T':
-               td->data[i] = 3; break;
+               td->data[j] = 3; break;
             default:
-               td->data[i] = -1; break;
+               td->data[j] = -1; break;
          }
       }
 
@@ -96,28 +148,13 @@ void ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, ushort 
       td->next = aux;
       aux->next=NULL;
       td = aux;
-      if (DBG == 1)
-      {
-         printf("[util]Seq %ld read!-> ", lnS);
-         clock_gettime(CLOCK_REALTIME, &stop);
-         seconds = (double)((stop.tv_sec+stop.tv_nsec*1e-9) - (double)(start.tv_sec+start.tv_nsec*1e-9));
-         printf("wall time %fs\n", seconds);
-      }
    }
 
-   ProcessTmpData(tdfirst, rd, lnN, lnS, flag);
+   ProcessTmpData(tdfirst, rd, lnN, *nS, flag);
 
-   if (DBG == 1)
-     for (i = 0;i < lnS; i++)
-     {
-       printf("[util] %d\n", rd->length[i]);
-     }
 
-   *nN = lnN + lnS;
-   *nS = lnS;
+   *nN = lnN + *nS;
    
-   gzclose(fp);
-
 }
 
 #endif

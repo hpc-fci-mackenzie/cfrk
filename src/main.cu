@@ -4,7 +4,6 @@ Developer: Fabricio Gomes Vilasboas
 Istitution: National Laboratory for Scientific Computing
 */
 
-
 #include <stdio.h>
 #include <pthread.h>
 #include <math.h>
@@ -32,7 +31,7 @@ void PrintFreq(struct read *pchunk, int nChunk, int chunkSize)
    char str[32];
    lint fourk = pow(4,k);
 
-   out = fopen(file_out, "ab");
+   out = fopen(file_out, "w");
 
    for (int j = 0; j < nChunk; j++)
    {
@@ -44,16 +43,16 @@ void PrintFreq(struct read *pchunk, int nChunk, int chunkSize)
          {
             cont = 0;
             sprintf(str, "\n");
-            //printf("%s", str);
-            fwrite(str, sizeof(char), sizeof(str), out);
-            //printf("> %d\n", rd->length[cont_seq]);
+            printf("%s", str);
+            //fwrite(str, sizeof(char), sizeof(str), out);
+            printf("> %d\n", pchunk->length[cont_seq]);
             cont_seq++;
          }
          if (pchunk[j].Freq[i] != 0)
          {
             sprintf(str, "%d ", pchunk[j].Freq[i]);
-            //printf("%s", str);
-            fwrite(str, sizeof(char), sizeof(str), out);
+            printf("%s", str);
+            //fwrite(str, sizeof(char), sizeof(str), out);
          }
          cont++;
       }
