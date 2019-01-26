@@ -23,7 +23,7 @@ int k;
 char file_out[512];
 //************************
 
-void PrintFreq(struct read *pchunk, int nChunk, int chunkSize)
+void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
 {
    FILE *out;
    int cont = 0;
@@ -45,7 +45,7 @@ void PrintFreq(struct read *pchunk, int nChunk, int chunkSize)
             sprintf(str, "\n");
             printf("%s", str);
             //fwrite(str, sizeof(char), sizeof(str), out);
-            printf("> %d\n", pchunk->length[cont_seq]);
+            printf("%s", seq[cont_seq].header);
             cont_seq++;
          }
          if (pchunk[j].Freq[i] != 0)
@@ -259,7 +259,7 @@ int main(int argc, char* argv[])
    puts("\n\n\t\tReading seqs!!!");
    struct read *rd;
    cudaMallocHost((void**)&rd, sizeof(struct read));
-   ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
+   struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
    printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
    lint et = time(NULL);
 
@@ -298,9 +298,9 @@ int main(int argc, char* argv[])
    kmer_main(chunk_remain, rnN, rnS, k, device);
 
    st = time(NULL);
-   PrintFreq(chunk, nChunk, chunkSize);
+   PrintFreq(seq, chunk, nChunk, chunkSize);
    et = time(NULL);
-   PrintFreq(chunk_remain, 1, rnS);
+   PrintFreq(seq, chunk_remain, 1, rnS);
    printf("\n\t\tWriting time: %ld\n", (et-st));
 
 return 0;

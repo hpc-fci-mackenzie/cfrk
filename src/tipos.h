@@ -15,6 +15,7 @@ const int DBG = 0;
 struct seq
 {
    char *header;
+   char *read;
    char *data;
    int len;
 };
