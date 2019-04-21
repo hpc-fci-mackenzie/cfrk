@@ -36,20 +36,21 @@ struct seq *ReadFasta(char *fileName, lint *nS)
    if ((fastaFile = fopen(fileName, "r")) == NULL) exit(EXIT_FAILURE);
           
    while ((size = getline(&line, &len, fastaFile)) != -1)
-   {      
+   {
        if (line[0] == '>')
        {
           count++;
           seq[count].header = (char*)malloc(sizeof(char)*size);
           strcpy(seq[count].header, line);
           flag = 0;
-       }     
-       else  
-       {  
+       }
+       else
+       {
           if (flag == 0)
           {
              seq[count].read = (char*)malloc(sizeof(char)*size);
              strcat(seq[count].read, line);
+	     seq[count].len = strlen(seq[count].read) - 1;
              flag = 1;
           }
           else
@@ -61,6 +62,7 @@ struct seq *ReadFasta(char *fileName, lint *nS)
              seq[count].read = (char*)malloc(sizeof(char)*(size+oldRead));
              strcat(seq[count].read, aux);
              strcat(seq[count].read, line);
+	     seq[count].len = strlen(seq[count].read) - 1;
              aux = NULL;
           }
        }
@@ -72,9 +74,15 @@ struct seq *ReadFasta(char *fileName, lint *nS)
 void ProcessData(struct seq *seq, struct read *rd, lint nN, lint nS, ushort flag)
 {
    lint i, j, pos = 0, seqCount = 0;
-   cudaMallocHost((void**)&rd->data, sizeof(char)*(nN + nS));
-   cudaMallocHost((void**)&rd->length, sizeof(int)*nS);
-   cudaMallocHost((void**)&rd->start, sizeof(lint)*nS);
+
+   //cudaMallocHost((void**)&rd->data, sizeof(char)*(nN + nS));
+   //cudaMallocHost((void**)&rd->length, sizeof(int)*nS);
+   //cudaMallocHost((void**)&rd->start, sizeof(lint)*nS);
+
+   rd->data = (char*)malloc(sizeof(char)*(nN + nS));
+   rd->length = (int*)malloc(sizeof(int)*nS);
+   rd->start = (lint*)malloc(sizeof(lint)*nS);
+
 
    rd->start[0] = 0;
 
@@ -105,15 +113,13 @@ struct seq *ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, 
 
    for (i = 0; i < *nS; i++)
    {
-      len = strlen(seq[i].read);
-      seq[i].len = len;
+      len = seq[i].len;
       lnN += len;
 
       seq[i].data = (char*)malloc(sizeof(char)*len);
 
       for (j = 0; j < len; j++)
       {
-         //char letter = toupper(seq->seq.s[i]);
          switch(seq[i].read[j])
          {   
             case 'a':

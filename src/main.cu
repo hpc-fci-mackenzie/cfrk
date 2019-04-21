@@ -258,7 +258,8 @@ int main(int argc, char* argv[])
    lint st = time(NULL);
    puts("\n\n\t\tReading seqs!!!");
    struct read *rd;
-   cudaMallocHost((void**)&rd, sizeof(struct read));
+   //cudaMallocHost((void**)&rd, sizeof(struct read));
+   rd = (struct read*)malloc(sizeof(struct read));
    struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
    printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
    lint et = time(NULL);
