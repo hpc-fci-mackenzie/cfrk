@@ -43,16 +43,16 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
          {
             cont = 0;
             sprintf(str, "\n");
-            printf("%s", str);
-            //fwrite(str, sizeof(char), sizeof(str), out);
-            printf("%s", seq[cont_seq].header);
+            // printf("%s", str);
+            fwrite(str, sizeof(char), sizeof(str), out);
+            // printf("%s", seq[cont_seq].header);
             cont_seq++;
          }
          if (pchunk[j].Freq[i] != 0)
          {
             sprintf(str, "%d ", pchunk[j].Freq[i]);
-            printf("%s", str);
-            //fwrite(str, sizeof(char), sizeof(str), out);
+            // printf("%s", str);
+            fwrite(str, sizeof(char), sizeof(str), out);
          }
          cont++;
       }
@@ -237,7 +237,7 @@ int main(int argc, char* argv[])
 
    if ( argc < 4)
    {
-      printf("Usage: ./kmer [dataset.fasta] [file_out.cfrk] [k] <number of threads: Default 12> <chunkSize: Default 8192>");
+      printf("Usage: ./cfrk [dataset.fasta] [file_out.cfrk] [k] <number of threads: Default 12> <chunkSize: Default 8192>");
       return 1;
    } 
    cudaDeviceReset();
@@ -258,8 +258,8 @@ int main(int argc, char* argv[])
    lint st = time(NULL);
    puts("\n\n\t\tReading seqs!!!");
    struct read *rd;
-   //cudaMallocHost((void**)&rd, sizeof(struct read));
-   rd = (struct read*)malloc(sizeof(struct read));
+   cudaMallocHost((void**)&rd, sizeof(struct read));
+   // rd = (struct read*)malloc(sizeof(struct read));
    struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
    printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
    lint et = time(NULL);
@@ -298,11 +298,11 @@ int main(int argc, char* argv[])
    struct read *chunk_remain = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN, nt);
    kmer_main(chunk_remain, rnN, rnS, k, device);
 
-   st = time(NULL);
-   PrintFreq(seq, chunk, nChunk, chunkSize);
-   et = time(NULL);
-   PrintFreq(seq, chunk_remain, 1, rnS);
-   printf("\n\t\tWriting time: %ld\n", (et-st));
+   // st = time(NULL);
+   // PrintFreq(seq, chunk, nChunk, chunkSize);
+   // et = time(NULL);
+   // PrintFreq(seq, chunk_remain, 1, rnS);
+   // printf("\n\t\tWriting time: %ld\n", (et-st));
 
 return 0;
 }

@@ -22,7 +22,8 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
 
    int *d_Index;// Index vector
    char *d_Seq;// Seq matrix
-   int *Freq, *d_Freq;// Frequence vector
+   // int *Freq;
+   int *d_Freq;// Frequence vector
    int fourk;// 4 power k
    lint *d_start;
    int *d_length;// The beggining and the length of each sequence
