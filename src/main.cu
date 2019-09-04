@@ -230,16 +230,17 @@ return NULL;
 
 int main(int argc, char* argv[])
 {
-
+    // Program init
    lint gnN, gnS, chunkSize = 8192;
    int devCount;
    int nt = 12;
-
+   // Check inputs
    if ( argc < 4)
    {
       printf("Usage: ./kmer [dataset.fasta] [file_out.cfrk] [k] <number of threads: Default 12> <chunkSize: Default 8192>");
       return 1;
-   } 
+   }
+   // Reset Cuda Device
    cudaDeviceReset();
    
    k = atoi(argv[3]);
@@ -247,8 +248,9 @@ int main(int argc, char* argv[])
       nt = atoi(argv[4]);
    if (argc == 6)
       chunkSize = atoi(argv[5]);
-
+    // Get Device Count
    cudaGetDeviceCount(&devCount);
+   // Get Device Info
    DeviceInfo(device);
 
    strcpy(file_out, argv[2]);
@@ -257,17 +259,22 @@ int main(int argc, char* argv[])
 
    lint st = time(NULL);
    puts("\n\n\t\tReading seqs!!!");
+   // Create read Struct
    struct read *rd;
    //cudaMallocHost((void**)&rd, sizeof(struct read));
+   // Allocate memory for read Struct
    rd = (struct read*)malloc(sizeof(struct read));
+   // Read Sequence from Fasta File
    struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
+
    printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
    lint et = time(NULL);
 
    printf("\n\t\tReading time: %ld\n", (et-st));
-
+    // Setting Chunk size
    int nChunk = floor(gnS/chunkSize);
    int i = 0;
+   //
    cudaMallocHost((void**)&chunk, sizeof(struct read)*nChunk);
    cudaMallocHost((void**)&nS, sizeof(lint)*nChunk);
    cudaMallocHost((void**)&nN, sizeof(lint)*nChunk);
