@@ -75,13 +75,13 @@ void ProcessData(struct seq *seq, struct read *rd, lint nN, lint nS, ushort flag
 {
    lint i, j, pos = 0, seqCount = 0;
 
-   //cudaMallocHost((void**)&rd->data, sizeof(char)*(nN + nS));
-   //cudaMallocHost((void**)&rd->length, sizeof(int)*nS);
-   //cudaMallocHost((void**)&rd->start, sizeof(lint)*nS);
+   cudaMallocHost((void**)&rd->data, sizeof(char)*(nN + nS));
+   cudaMallocHost((void**)&rd->length, sizeof(int)*nS);
+   cudaMallocHost((void**)&rd->start, sizeof(lint)*nS);
 
-   rd->data = (char*)malloc(sizeof(char)*(nN + nS));
-   rd->length = (int*)malloc(sizeof(int)*nS);
-   rd->start = (lint*)malloc(sizeof(lint)*nS);
+   //rd->data = (char*)malloc(sizeof(char)*(nN + nS));
+   //rd->length = (int*)malloc(sizeof(int)*nS);
+   //rd->start = (lint*)malloc(sizeof(lint)*nS);
 
 
    rd->start[0] = 0;
