@@ -17,7 +17,7 @@ void GetDeviceProp(uint8_t device, lint *maxGridSize, lint *maxThreadDim, lint *
    *deviceMemory = prop.totalGlobalMem;
 }
 
-void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
+void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device, cudaStream_t *stream)
 {
 
    int *d_Index;// Index vector
@@ -98,9 +98,9 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
 
 //************************************************
 
-   if ( cudaMemcpyAsync(d_Seq, rd->data, size[0], cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 6] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMemcpyAsync(d_start, rd->start, size[4], cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 7] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMemcpyAsync(d_length, rd->length, size[2], cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMemcpyAsync(d_Seq, rd->data, size[0], cudaMemcpyHostToDevice, *stream) != cudaSuccess) printf("[Error 6] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMemcpyAsync(d_start, rd->start, size[4], cudaMemcpyHostToDevice, *stream) != cudaSuccess) printf("[Error 7] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMemcpyAsync(d_length, rd->length, size[2], cudaMemcpyHostToDevice, *stream) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
 
 //************************************************
 
@@ -113,7 +113,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    //cudaFree(rd);
 
    if ( cudaMallocHost((void**)&rd->Freq, size[3]) != cudaSuccess) printf("\n[Error 9] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMemcpy(rd->Freq, d_Freq, size[3], cudaMemcpyDeviceToHost) != cudaSuccess) printf("\n[Error 10] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMemcpyAsync(rd->Freq, d_Freq, size[3], cudaMemcpyDeviceToHost, *stream) != cudaSuccess) printf("\n[Error 10] %s\n", cudaGetErrorString(cudaGetLastError()));
 
 
 //************************************************
