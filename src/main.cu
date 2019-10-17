@@ -215,18 +215,17 @@ void *LaunchKmer(void* threadId)
    printf("\t\ttid: %d\n", tid);
 
    DeviceInfo(tid);
-   cudaStream_t *stream;
-   cudaStreamCreate(stream);
-
+   cudaStream_t stream[end - start];
    int i = 0;
    for (i = start; i < end; i++)
    {
-      kmer_main(&chunk[i], nN[i], nS[i], k, device, stream);
+      cudaStreamCreate(&stream[i]);
+      kmer_main(&chunk[i], nN[i], nS[i], k, device, &stream[i]);
       cudaStreamSynchronize(0);
       cudaFreeHost(chunk[i].data);
       cudaFreeHost(chunk[i].length);
       cudaFreeHost(chunk[i].start);
-      cudaStreamDestroy(*stream);
+      cudaStreamDestroy(stream[i]);
    }
 
 return NULL;
@@ -296,13 +295,19 @@ int main(int argc, char* argv[])
    int threadRemain = nChunk - (offset*devCount);
    if (threadRemain > 0)
    {
-      kmer_main(&chunk[nChunk-1], nN[nChunk-1], nS[nChunk-1], k, device);
+       cudaStream_t stream[1];
+       cudaStreamCreate(&stream[0]);
+      kmer_main(&chunk[nChunk-1], nN[nChunk-1], nS[nChunk-1], k, device, &stream[0]);
+       cudaStreamDestroy(stream[0]);
    }
 
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
    lint rnS, rnN;
    struct read *chunk_remain = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN, nt);
-   kmer_main(chunk_remain, rnN, rnS, k, device);
+    cudaStream_t stream[1];
+    cudaStreamCreate(&stream[0]);
+   kmer_main(chunk_remain, rnN, rnS, k, device, &stream[0]);
+    cudaStreamDestroy(stream[0]);
 
    // st = time(NULL);
    // PrintFreq(seq, chunk, nChunk, chunkSize);

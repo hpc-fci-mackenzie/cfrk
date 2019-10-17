@@ -3,7 +3,7 @@
 
 #include "tipos.h"
 
-void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device);
+void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device, cudaStream_t *stream);
 
 __global__ void SetMatrix(int *Mat, ushort offset, int val, int nF);
 
