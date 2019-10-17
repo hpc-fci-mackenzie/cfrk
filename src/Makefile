@@ -1,6 +1,6 @@
 #NVCCFLAGS=-ccbin=icpc -lm -m64 -arch=sm_35 --use_fast_math --default-stream per-thread --ptxas-options=-O3 
 #INTELFLAGS=-Xcompiler="-qopenmp -Ofast -pthread"
-NVCCFLAGS=-lm -m64 -arch=sm_50 --use_fast_math --default-stream per-thread --ptxas-options=-O3
+NVCCFLAGS=-lm -m64 -arch=sm_50 --default-stream per-thread --ptxas-options=-O3 #--use_fast_math
 INTELFLAGS=-Xcompiler -fopenmp -lpthread
 default: cfrk
 
