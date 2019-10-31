@@ -4,10 +4,13 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <zlib.h>
 #include <time.h>
-#include <cuda.h>
 #include "tipos.h"
+
+#ifndef CPU
+#include <zlib.h>
+#include <cuda.h>
+#endif
 
 int GetNs(char *FileName)
 {
@@ -50,7 +53,7 @@ struct seq *ReadFasta(char *fileName, lint *nS)
           {
              seq[count].read = (char*)malloc(sizeof(char)*size);
              strcat(seq[count].read, line);
-	     seq[count].len = strlen(seq[count].read) - 1;
+             seq[count].len = strlen(seq[count].read) - 1;
              flag = 1;
           }
           else
@@ -62,7 +65,7 @@ struct seq *ReadFasta(char *fileName, lint *nS)
              seq[count].read = (char*)malloc(sizeof(char)*(size+oldRead));
              strcat(seq[count].read, aux);
              strcat(seq[count].read, line);
-	     seq[count].len = strlen(seq[count].read) - 1;
+             seq[count].len = strlen(seq[count].read) - 1;
              aux = NULL;
           }
        }
@@ -75,14 +78,15 @@ void ProcessData(struct seq *seq, struct read *rd, lint nN, lint nS, ushort flag
 {
    lint i, j, pos = 0, seqCount = 0;
 
+#ifndef CPU
    cudaMallocHost((void**)&rd->data, sizeof(char)*(nN + nS));
    cudaMallocHost((void**)&rd->length, sizeof(int)*nS);
    cudaMallocHost((void**)&rd->start, sizeof(lint)*nS);
-
-   //rd->data = (char*)malloc(sizeof(char)*(nN + nS));
-   //rd->length = (int*)malloc(sizeof(int)*nS);
-   //rd->start = (lint*)malloc(sizeof(lint)*nS);
-
+#else
+   rd->data = (char*)malloc(sizeof(char)*(nN + nS));
+   rd->length = (int*)malloc(sizeof(int)*nS);
+   rd->start = (lint*)malloc(sizeof(lint)*nS);
+#endif
 
    rd->start[0] = 0;
 
