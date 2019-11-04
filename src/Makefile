@@ -10,5 +10,11 @@ cfrk:
 	nvcc main.cu $(INTELFLAGS) $(NVCCFLAGS) -c
 	nvcc main.o kmer_kernel.o kmer_main.o $(NVCCFLAGS) $(INTELFLAGS) -o ../bin/cfrk
 	rm main.o kmer_main.o kmer_kernel.o
+cfrk-pipeline:
+	nvcc $(INTELFLAGS) $(NVCCFLAGS) kmer_kernel.cu -c
+	nvcc $(INTELFLAGS) $(NVCCFLAGS) kmer_main_pipeline.cu -c
+	nvcc main_pipeline.cu $(INTELFLAGS) $(NVCCFLAGS) -c
+	nvcc main_pipeline.o kmer_kernel.o kmer_main_pipeline.o $(NVCCFLAGS) $(INTELFLAGS) -o ../bin/cfrk
+	rm main_pipeline.o kmer_main_pipeline.o kmer_kernel.o
 clean:
 	rm -f ../bin/* ./*.o
