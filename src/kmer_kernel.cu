@@ -3,7 +3,7 @@
 #include "tipos.h"
 
 //Set Matrix values
-__global__ void SetMatrix(float *Mat, ushort offset, int val, int nF)
+__global__ void SetMatrix(int *Mat, ushort offset, int val, int nF)
 {
    lint idx = threadIdx.x + (blockDim.x * blockIdx.x);
 
