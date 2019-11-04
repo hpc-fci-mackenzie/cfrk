@@ -9,8 +9,8 @@ __global__ void SetMatrix(float *Mat, ushort offset, int val, int nF);
 
 __global__ void ComputeIndex(char *Seq, int *Index, const int k, lint nN, ushort offset);
 
-__global__ void ComputeFreq(int *Index, float *Freq, lint *start, int *length, ushort offset, int fourk, lint nS, lint nN);
+__global__ void ComputeFreq(int *Index, int *Freq, lint *start, int *length, ushort offset, int fourk, lint nS, lint nN);
 
-__global__ void ComputeFreqNew(int *Index, float *Freq, lint *start, int *length, ushort offset, int fourk, lint nS);
+__global__ void ComputeFreqNew(int *Index, int *Freq, lint *start, int *length, ushort offset, int fourk, lint nS);
 
 #endif
