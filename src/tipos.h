@@ -25,7 +25,7 @@ struct read// Used to read sequences
    char *data;
    int *length;
    lint *start;
-   float *Freq;
+   int *Freq;
    struct read *next;
 };
 

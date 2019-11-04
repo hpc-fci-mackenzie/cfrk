@@ -3,7 +3,7 @@
 #include "tipos.h"
 
 //Set Matrix values
-__global__ void SetMatrix(float *Mat, ushort offset, int val, int nF)
+__global__ void SetMatrix(int *Mat, ushort offset, int val, int nF)
 {
    lint idx = threadIdx.x + (blockDim.x * blockIdx.x);
 
@@ -49,7 +49,7 @@ __global__ void ComputeIndex(char *Seq, int *Index, const int k, lint nN, ushort
 }
 
 //Compute k-mer frequency
-__global__ void ComputeFreq(int *Index, float *Freq, lint *start, int *length, ushort offset, int fourk, lint nS, lint nN)
+__global__ void ComputeFreq(int *Index, int *Freq, lint *start, int *length, ushort offset, int fourk, lint nS, lint nN)
 {
 
    int idx = threadIdx.x + (blockDim.x * blockIdx.x);
@@ -70,7 +70,7 @@ __global__ void ComputeFreq(int *Index, float *Freq, lint *start, int *length, u
 }
 
 //New way to compute k-mer frequency
-__global__ void ComputeFreqNew(int *Index, float *Freq, lint *start, int *length, ushort offset, int fourk, lint nS)
+__global__ void ComputeFreqNew(int *Index, int *Freq, lint *start, int *length, ushort offset, int fourk, lint nS)
 {
 
    int blx = blockIdx.x;
