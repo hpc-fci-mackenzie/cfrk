@@ -208,21 +208,24 @@ void *LaunchKmer(void* threadId)
 {
 
    lint tid = (lint)threadId;
+
    int start = tid * offset;
    int end = start+offset;
 
    printf("\t\ttid: %d\n", tid);
 
    DeviceInfo(tid);
-
+   cudaStream_t stream[end - start];
    int i = 0;
    for (i = start; i < end; i++)
    {
-      kmer_main(&chunk[i], nN[i], nS[i], k, device);
+      cudaStreamCreate(&stream[i]);
+      kmer_main(&chunk[i], nN[i], nS[i], k, device, &stream[i]);
       cudaStreamSynchronize(0);
       cudaFreeHost(chunk[i].data);
       cudaFreeHost(chunk[i].length);
       cudaFreeHost(chunk[i].start);
+      cudaStreamDestroy(stream[i]);
    }
 
 return NULL;
@@ -259,7 +262,7 @@ int main(int argc, char* argv[])
    puts("\n\n\t\tReading seqs!!!");
    struct read *rd;
    cudaMallocHost((void**)&rd, sizeof(struct read));
-   // rd = (struct read*)malloc(sizeof(struct read));
+//   rd = (struct read*)malloc(sizeof(struct read));
    struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
    printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
    lint et = time(NULL);
@@ -279,24 +282,31 @@ int main(int argc, char* argv[])
 
    for (i = 0; i < devCount; i++)
    {
-      pthread_create(&threads[i], NULL, LaunchKmer, (void*)i);
+      pthread_create(&threads[i], NULL, LaunchKmer, (void*) &i);
    }
 
    for (i = 0; i < devCount; i++)
    {
+
       pthread_join(threads[i], NULL);
    }
 
    int threadRemain = nChunk - (offset*devCount);
    if (threadRemain > 0)
    {
-      kmer_main(&chunk[nChunk-1], nN[nChunk-1], nS[nChunk-1], k, device);
+       cudaStream_t stream[1];
+       cudaStreamCreate(&stream[0]);
+      kmer_main(&chunk[nChunk-1], nN[nChunk-1], nS[nChunk-1], k, device, &stream[0]);
+       cudaStreamDestroy(stream[0]);
    }
 
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
    lint rnS, rnN;
    struct read *chunk_remain = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN, nt);
-   kmer_main(chunk_remain, rnN, rnS, k, device);
+    cudaStream_t stream[1];
+    cudaStreamCreate(&stream[0]);
+   kmer_main(chunk_remain, rnN, rnS, k, device, &stream[0]);
+    cudaStreamDestroy(stream[0]);
 
    // st = time(NULL);
    // PrintFreq(seq, chunk, nChunk, chunkSize);
