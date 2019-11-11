@@ -45,4 +45,6 @@ $(SRC_DIR)/%.o: $(SRC_DIR)/%.c
 
 clean-cpu:
 	@rm $(BIN_DIR)/*.out
-	
+
+fasta-gen:
+	@g++ $(SRC_DIR)/fasta_gen.cpp -o $(BIN_DIR)/fasta-gen.out
