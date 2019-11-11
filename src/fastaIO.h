@@ -4,10 +4,13 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <zlib.h>
 #include <time.h>
-#include <cuda.h>
 #include "tipos.h"
+
+#ifndef CPU
+#include <zlib.h>
+#include <cuda.h>
+#endif
 
 int GetNs(char *FileName)
 {
@@ -28,45 +31,68 @@ struct seq *ReadFasta(char *fileName, lint *nS)
    size_t len = 0;
    ssize_t size, oldRead;
    struct seq *seq;
-   int count = -1, flag = 0; 
+   int count = -1, flag = 0;
 
    *nS = GetNs(fileName);
-   seq = (struct seq*)malloc(sizeof(struct seq) * *nS);
-       
+   seq = (struct seq*)calloc(*nS, sizeof(struct seq));
+
    if ((fastaFile = fopen(fileName, "r")) == NULL) exit(EXIT_FAILURE);
-          
+
    while ((size = getline(&line, &len, fastaFile)) != -1)
    {
-       if (line[0] == '>')
-       {
-          count++;
-          seq[count].header = (char*)malloc(sizeof(char)*size);
-          strcpy(seq[count].header, line);
-          flag = 0;
-       }
-       else
-       {
-          if (flag == 0)
-          {
-             seq[count].read = (char*)malloc(sizeof(char)*size);
-             strcat(seq[count].read, line);
-	     seq[count].len = strlen(seq[count].read) - 1;
-             flag = 1;
-          }
-          else
-          {
-             oldRead = strlen(seq[count].read);
-             aux = (char*)malloc(sizeof(char)*oldRead);
-             strcpy(aux, seq[count].read);
-             seq[count].read = NULL;
-             seq[count].read = (char*)malloc(sizeof(char)*(size+oldRead));
-             strcat(seq[count].read, aux);
-             strcat(seq[count].read, line);
-	     seq[count].len = strlen(seq[count].read) - 1;
-             aux = NULL;
-          }
-       }
+      /*
+         NOTA: Segundo a especificação padrão de C, getline retorna o tamanho
+               do buffer lido sem contar o caractere de terminação nulo ('\0').
+               Utilizar funções como strcpy e strcat pode dar problema no
+               código abaixo porque está sendo alocando memória sem considerar
+               os caracteres de terminação nulo. Além disso, foram corrigidos
+               pontos de memory leak.
+      */
+
+      // printf("@deb | GETLINE | size: %ld - len: %ld\n", size, len);
+
+      if (line[0] == '>')
+      {
+         count++;
+         // seq[count].header = (char*)malloc(sizeof(char)*size);
+         seq[count].header = (char*)calloc(size + 1, sizeof(char));
+         strcpy(seq[count].header, line);
+         flag = 0;
+         // printf("@deb | HEADER |seq[%d].header:\n%s", count, seq[count].header);
+      }
+      else
+      {
+         if (flag == 0)
+         {
+            // seq[count].read = (char*)malloc(sizeof(char)*size);
+            seq[count].read = (char*)calloc(size + 1, sizeof(char));
+            // strcat(seq[count].read, line);
+            strcpy(seq[count].read, line);
+            seq[count].len = strlen(seq[count].read) - 1;
+            flag = 1;
+            // printf("@deb | FLAG0 | seq[%d].read:\n%s", count, seq[count].read);
+         }
+         else
+         {
+            oldRead = strlen(seq[count].read);
+            // aux = (char*)malloc(sizeof(char)*oldRead);
+            aux = (char*)calloc(oldRead + 1, sizeof(char));
+            strcpy(aux, seq[count].read);
+            // seq[count].read = NULL;
+            free(seq[count].read);
+            // seq[count].read = (char*)malloc(sizeof(char)*(size+oldRead));
+            seq[count].read = (char*)calloc((size + oldRead + 1), sizeof(char));
+            // strcat(seq[count].read, aux);
+            strcpy(seq[count].read, aux);
+            strcat(seq[count].read, line);
+            seq[count].len = strlen(seq[count].read) - 1;
+            // aux = NULL;
+            free(aux);
+            // printf("@deb | FLAG1 | seq[%d].read:\n%s", count, seq[count].read);
+         }
+      }
    }
+
    return seq;
 }
 
@@ -75,16 +101,17 @@ void ProcessData(struct seq *seq, struct read *rd, lint nN, lint nS, ushort flag
 {
    lint i, j, pos = 0, seqCount = 0;
 
+#ifndef CPU
    cudaMallocHost((void**)&rd->data, sizeof(char)*(nN + nS));
    cudaMallocHost((void**)&rd->length, sizeof(int)*nS);
    cudaMallocHost((void**)&rd->start, sizeof(lint)*nS);
+#else
+   rd->data = (char*)calloc((nN + nS), sizeof(char));
+   rd->length = (int*)calloc(nS, sizeof(int));
+   rd->start = (lint*)calloc(nS, sizeof(lint));
+#endif
 
-   //rd->data = (char*)malloc(sizeof(char)*(nN + nS));
-   //rd->length = (int*)malloc(sizeof(int)*nS);
-   //rd->start = (lint*)malloc(sizeof(lint)*nS);
-
-
-   rd->start[0] = 0;
+   // rd->start[0] = 0;
 
    for (j = 0; j < nS; j++)
    {
@@ -98,6 +125,7 @@ void ProcessData(struct seq *seq, struct read *rd, lint nN, lint nS, ushort flag
       rd->length[seqCount] = seq[j].len;
       seqCount++;
       rd->start[seqCount] = pos;
+      // printf("@deb | ProcessData | rd->start[%ld]: %ld\n", seqCount, rd->start[seqCount]);
    }
 }
 
@@ -105,8 +133,8 @@ void ProcessData(struct seq *seq, struct read *rd, lint nN, lint nS, ushort flag
 struct seq *ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, ushort flag)
 {
    struct seq *seq;
-   int len;
-   lint lnN = 0;
+   int len; // tamanho de cada sequência
+   lint lnN = 0; // soma do tamanho de todas as sequências
    int i, j;
 
    seq = ReadFasta(file, nS);
@@ -116,7 +144,8 @@ struct seq *ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, 
       len = seq[i].len;
       lnN += len;
 
-      seq[i].data = (char*)malloc(sizeof(char)*len);
+      // seq[i].data = (char*)malloc(sizeof(char)*len);
+      seq[i].data = (char*)calloc(len, sizeof(char));
 
       for (j = 0; j < len; j++)
       {
