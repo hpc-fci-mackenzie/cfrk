@@ -1,54 +1,45 @@
 #include <stdio.h>
 // #include <cuda.h>
+#include <math.h>
 #include "tipos.h"
-
-/*
-   The execution configuration is specified by inserting an expression of the form
-
-      <<< Dg, Db, Ns, S >>> between the function name and the parenthesized argument list, where:
-
-   - Dg is of type dim3 (see Section B.3.2) and specifies the dimension and size of the grid, such that Dg.x * Dg.y * Dg.z equals the number of blocks being launched; Dg.z must be equal to 1 for devices of compute capability 1.x;
-   - Db is of type dim3 (see Section B.3.2) and specifies the dimension and size of each block, such that Db.x * Db.y * Db.z equals the number of threads per block;
-   - Ns is of type size_t and specifies the number of bytes in shared memory that is dynamically allocated per block for this call in addition to the statically allocated memory; this dynamically allocated memory is used by any of the variables declared as an external array as mentioned in Section B.2.3; Ns is an optional argument which defaults to 0;
-   - S is of type cudaStream_t and specifies the associated stream; S is an optional argument which defaults to 0.
-*/
 
 //Set Matrix values
 void SetMatrix(int *Mat, ushort offset, int val, int nF)
 {
-   /*
-   lint idx = threadIdx.x + (blockDim.x * blockIdx.x);
-
-   lint start = idx * offset;
-   lint end   = start + offset;
-
-   for(lint id = start; id < end; id++)
-   {
-      if (id < nF)
-         Mat[idx] = val;
-   }
-   */
 }
 
-//Compute k-mer index
+/*
+   Compute k-mer index
+   Na primeira fase é realizada a conversão dos valores numéricos dos k-mers,
+   que estão na base 4, para a base 10.O kernel ComputeIndex é responsável por
+   esta conversão. O resultado desta fase é armazenado em um vetor denominado
+   vetor de conversão.
+
+   Nota: No código abaixo, estão sendo transformados 2 caracteres de Seq em 1
+         de Index. Entretando, acredito que não esteja pegando as posições
+         corretas. Por exemplo:
+
+         Seq   -> 1 1 3 2 1
+         Index -> 5 (11), 7 (13), 14 (32)
+*/
 void ComputeIndex(char *Seq, int *Index, const int k, lint nN, ushort offset)
 {
-   /*
-   lint idx = threadIdx.x + (blockDim.x * blockIdx.x);
-
-   lint start = idx * offset;
-   lint end   = start + offset;
+   lint start = 0;
+   lint end = offset;
 
    for(lint id = start; id < end; id++)
    {
       lint index = 0;
-      if (id < nN)
-      {
+
+      if(id < nN) {
+         // printf("@deb | nuc: ");
          for( lint i = 0; i < k; i++ )
          {
             char nuc = Seq[i + id];
+
             if (nuc != -1) //Verifica se ha alguem que nao deve ser processado
             {
+               //printf("%d", nuc);
                index += nuc * powf(4, ((k-1)-i));
             }
             else
@@ -56,18 +47,27 @@ void ComputeIndex(char *Seq, int *Index, const int k, lint nN, ushort offset)
                index = -1;
                break;
             }
-         }//End for i
+         }
+
+         // printf("\n");
+
          Index[id] = index;// Value of the combination
+         // printf("@deb | ComputeIndex | Index[%ld]: %d\n", id, Index[id]);
       }
-   }//End for id
-   */
+   }
 }
 
-//Compute k-mer frequency
+/*
+   Compute k-mer frequency
+   Na segunda fase é calculada a repetição dos valores convertidos na fase
+   anterior. O kernel ComputeFreq é responsável pela contabilização da
+   repetição dos k-mers. O resultado do cálculo é armazenado em um vetor
+   denominado vetor de frequência.
+*/
 void ComputeFreq(int *Index, int *Freq, lint *start, int *length, ushort offset, int fourk, lint nS, lint nN)
 {
-   /*
-   int idx = threadIdx.x + (blockDim.x * blockIdx.x);
+   // int idx = threadIdx.x + (blockDim.x * blockIdx.x);
+   int idx = 0;
 
    if (idx < nS)
    {
@@ -79,29 +79,13 @@ void ComputeFreq(int *Index, int *Freq, lint *start, int *length, ushort offset,
          {
             int pos = (fourk * idx) + Index[i];
             Freq[pos] += 1;
+            // printf("%d - Freq[%d]: %d\n", i, pos, Freq[pos]);
          }
       }
    }
-   */
 }
 
 //New way to compute k-mer frequency
 void ComputeFreqNew(int *Index, int *Freq, lint *start, int *length, ushort offset, int fourk, lint nS)
 {
-   /*
-   int blx = blockIdx.x;
-
-   int st = blx * offset;
-   int nd = st + offset;
-
-   for (int i = st; i < nd; i++)
-   {
-      int idx = start[i] + threadIdx.x;
-      int id_freq = (fourk * i) + Index[idx];
-      if (threadIdx.x < length[i]-1)
-      {
-         atomicAdd(&Freq[id_freq], 1);
-      }
-   }
-   */
 }

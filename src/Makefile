@@ -44,5 +44,5 @@ $(SRC_DIR)/%.o: $(SRC_DIR)/%.c
 	@gcc -c $< $(CFLAGS) -o $@
 
 clean-cpu:
-	@rm $(SRC_DIR)/*.o
+	@rm $(BIN_DIR)/*.out
 	
