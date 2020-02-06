@@ -10,7 +10,7 @@ Istitution: National Laboratory for Scientific Computing
 #include <stdint.h>
 #include <omp.h>
 #include <string.h>
-#include "kmer.cuh"
+#include "kmer_openacc.cuh"
 #include "tipos.h"
 #include "fastaIO.h"
 
@@ -216,13 +216,14 @@ void *LaunchKmer(void* threadId)
    DeviceInfo(tid);
 
    int i = 0;
+#pragma acc parallel loop
    for (i = start; i < end; i++)
    {
       kmer_main(&chunk[i], nN[i], nS[i], k, device);
-      cudaStreamSynchronize(0);
-      cudaFreeHost(chunk[i].data);
-      cudaFreeHost(chunk[i].length);
-      cudaFreeHost(chunk[i].start);
+//      cudaStreamSynchronize(0);
+//      cudaFreeHost(chunk[i].data);
+//      cudaFreeHost(chunk[i].length);
+//      cudaFreeHost(chunk[i].start);
    }
 
 return NULL;
@@ -279,12 +280,7 @@ int main(int argc, char* argv[])
 
    for (i = 0; i < devCount; i++)
    {
-<<<<<<< HEAD
       pthread_create(&threads[i], NULL, LaunchKmer, (void*)i);
-=======
-
-      pthread_create(&threads[i], NULL, LaunchKmer, (void*) i);
->>>>>>> parent of 2da2aba... ~ Stream implementation
    }
 
    for (i = 0; i < devCount; i++)

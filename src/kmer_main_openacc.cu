@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "tipos.h"
-#include "kmer.cuh"
+#include "kmer_openacc.cuh"
 
 void GetDeviceProp(uint8_t device, lint *maxGridSize, lint *maxThreadDim, lint *deviceMemory)
 {
@@ -27,8 +27,8 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    int fourk;// 4 power k
    lint *d_start;
    int *d_length;// The beggining and the length of each sequence
-   lint block[4], grid[4];// Grid config; 0:nN, 1:nS
-   lint maxGridSize, maxThreadDim, deviceMemory;// Device config
+//   lint block[4], grid[4];// Grid config; 0:nN, 1:nS
+//   lint maxGridSize, maxThreadDim, deviceMemory;// Device config
    ushort offset[4] = {1,1,1,1};
    size_t size[5], totalsize;
 
@@ -37,8 +37,8 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
 
    fourk = POW(k);
 
-   cudaSetDevice(device);
-   GetDeviceProp(device, &maxGridSize, &maxThreadDim, &deviceMemory);
+//   cudaSetDevice(device);
+//   GetDeviceProp(device, &maxGridSize, &maxThreadDim, &deviceMemory);
 
 //---------------------------------------------------------------------------
    size[0] = nN * sizeof(char);// d_Seq and Seq size
@@ -56,13 +56,13 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    }
 //---------------------------------------------------------------------------
 
-   if ( cudaMalloc ((void**)&d_Seq, size[0])    != cudaSuccess ) printf("\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMalloc ((void**)&d_Index, size[1])  != cudaSuccess ) printf("\n[Error 2] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMalloc ((void**)&d_start, size[4])  != cudaSuccess ) printf("\n[Error 3] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMalloc ((void**)&d_length, size[2]) != cudaSuccess ) printf("\n[Error 4] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMalloc ((void**)&d_Freq, size[3])   != cudaSuccess ) printf("\n[Error 5] %s\n", cudaGetErrorString(cudaGetLastError()));
+//   if ( cudaMalloc ((void**)&d_Seq, size[0])    != cudaSuccess ) printf("\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
+//   if ( cudaMalloc ((void**)&d_Index, size[1])  != cudaSuccess ) printf("\n[Error 2] %s\n", cudaGetErrorString(cudaGetLastError()));
+//   if ( cudaMalloc ((void**)&d_start, size[4])  != cudaSuccess ) printf("\n[Error 3] %s\n", cudaGetErrorString(cudaGetLastError()));
+//   if ( cudaMalloc ((void**)&d_length, size[2]) != cudaSuccess ) printf("\n[Error 4] %s\n", cudaGetErrorString(cudaGetLastError()));
+//   if ( cudaMalloc ((void**)&d_Freq, size[3])   != cudaSuccess ) printf("\n[Error 5] %s\n", cudaGetErrorString(cudaGetLastError()));
 
-//************************************************
+/*/************************************************
    block[0] = maxThreadDim;
    grid[0] = floor(nN / block[0]) + 1;
    if (grid[0] > maxGridSize)
@@ -96,44 +96,31 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
       offset[3] = (nF / (grid[3] * block[3])) + 1;
    }
 
+*///************************************************
+
+//   if ( cudaMemcpyAsync(d_Seq, rd->data, size[0], cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 6] %s\n", cudaGetErrorString(cudaGetLastError()));
+//   if ( cudaMemcpyAsync(d_start, rd->start, size[4], cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 7] %s\n", cudaGetErrorString(cudaGetLastError()));
+//   if ( cudaMemcpyAsync(d_length, rd->length, size[2], cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
+
 //************************************************
 
-   if ( cudaMemcpyAsync(d_Seq, rd->data, size[0], cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 6] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMemcpyAsync(d_start, rd->start, size[4], cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 7] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMemcpyAsync(d_length, rd->length, size[2], cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
-
-//************************************************
-
-<<<<<<< HEAD
-   SetMatrix<<<grid[0], block[0]>>>(d_Index, offset[0], -1, nN);
-   SetMatrix<<<grid[3], block[3]>>>(d_Freq, offset[3], 0, nF);
-   ComputeIndex<<<grid[0], block[0]>>>(d_Seq, d_Index, k, nN, offset[0]);
-   //ComputeFreq<<<grid[1], block[1]>>>(d_Index, d_Freq, d_start, d_length, offset[1], fourk, nS, nN);
-   ComputeFreqNew<<<grid[2],block[2]>>>(d_Index, d_Freq, d_start, d_length, offset[2], fourk, nS);
-=======
-   SetMatrix<<<grid[0], block[0], 0, *stream>>>(d_Index, offset[0], -1, nN);
-   SetMatrix<<<grid[3], block[3], 0, *stream>>>(d_Freq, offset[3], 0, nF);
-   ComputeIndex<<<grid[0], block[0], 0, *stream>>>(d_Seq, d_Index, k, nN, offset[0]);
-   //ComputeFreq<<<grid[1], block[1]>>>(d_Index, d_Freq, d_start, d_length, offset[1], fourk, nS, nN);
-   ComputeFreqNew<<<grid[2],block[2], 0, *stream>>>(d_Index, d_Freq, d_start, d_length, offset[2], fourk, nS);
->>>>>>> parent of 2da2aba... ~ Stream implementation
+   SetMatrix(d_Index, offset[0], -1, nN);
+   SetMatrix(d_Freq, offset[3], 0, nF);
+   ComputeIndex(d_Seq, d_Index, k, nN, offset[0]);
+   ComputeFreqNew(d_Index, d_Freq, d_start, d_length, offset[1], fourk, nS, nN);
 
    //cudaFree(rd);
 
-   if ( cudaMallocHost((void**)&rd->Freq, size[3]) != cudaSuccess) printf("\n[Error 9] %s\n", cudaGetErrorString(cudaGetLastError()));
-<<<<<<< HEAD
-   if ( cudaMemcpy(rd->Freq, d_Freq, size[3], cudaMemcpyDeviceToHost) != cudaSuccess) printf("\n[Error 10] %s\n", cudaGetErrorString(cudaGetLastError()));
-=======
-   if ( cudaMemcpyAsync(rd->Freq, d_Freq, size[3], cudaMemcpyDeviceToHost, *stream) != cudaSuccess) printf("\n[Error 10] %s\n", cudaGetErrorString(cudaGetLastError()));
->>>>>>> parent of 2da2aba... ~ Stream implementation
-
+//   if ( cudaMallocHost((void**)&rd->Freq, size[3]) != cudaSuccess) printf("\n[Error 9] %s\n", cudaGetErrorString(cudaGetLastError()));
+//   if ( cudaMemcpy(rd->Freq, d_Freq, size[3], cudaMemcpyDeviceToHost) != cudaSuccess) printf("\n[Error 10] %s\n", cudaGetErrorString(cudaGetLastError()));
+\
 
 //************************************************
-   cudaFree(d_Seq);
-   cudaFree(d_Freq);
-   cudaFree(d_Index);
-   cudaFree(d_start);
-   cudaFree(d_length);
+//   cudaFree(d_Seq);
+//   cudaFree(d_Freq);
+//   cudaFree(d_Index);
+//   cudaFree(d_start);
+//   cudaFree(d_length);
 //---------------------------------------------------------------------------
 
    //printf("\nFim kmer_main\n");
