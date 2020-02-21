@@ -18,12 +18,13 @@ __global__ void SetMatrix(int *Mat, ushort offset, int val, int nF)
 }
 
 //Compute k-mer index
-__global__ void ComputeIndex(char *Seq, int *Index, const int k, lint nN, ushort offset)
+__global__ void ComputeIndex(char *Seq, struct counter *counter, const int k, lint nN, ushort offset, int *n_combination)
 {
    lint idx = threadIdx.x + (blockDim.x * blockIdx.x);
 
    lint start = idx * offset;
    lint end   = start + offset;
+   int n_combination_counter = 0;
 
    for(lint id = start; id < end; id++)
    {
@@ -39,16 +40,34 @@ __global__ void ComputeIndex(char *Seq, int *Index, const int k, lint nN, ushort
             }
             else
             {
-               index = -1;
+//               index = -1;
                break;
             }
          }//End for i
-         Index[id] = index;// Value of the combination
+         __threadfence();
+         for (int t = 0; t < *n_combination; t++){
+             if (counter[t].index = -1){
+                 atomicAdd(counter[t].index,index);// Value of the combination
+                 atomicAdd(counter[t].Freq, 1);// Value of the combination
+             } else {
+                 atomicAdd(counter[t].Freq, 1);// Value of the combination
+             }
+         }
+         __syncthreads();
+         if (n_combination_counter >= *n_combination) printf("ERROR: Counter greater them combination");
+
       }
    }//End for id
 }
 
 //Compute k-mer frequency
+// Change Index and Freq vectors by Struct
+/*
+ *  struct X {
+ *      int index;
+ *      int count = 0;
+ *  }
+ * */
 __global__ void ComputeFreq(int *Index, int *Freq, lint *start, int *length, ushort offset, int fourk, lint nS, lint nN)
 {
 
@@ -70,7 +89,7 @@ __global__ void ComputeFreq(int *Index, int *Freq, lint *start, int *length, ush
 }
 
 //New way to compute k-mer frequency
-__global__ void ComputeFreqNew(int *Index, int *Freq, lint *start, int *length, ushort offset, int fourk, lint nS)
+__global__ void ComputeFreqNew(struct counter *counter, lint *start, int *length, ushort offset, int k, lint nS)
 {
 
    int blx = blockIdx.x;
@@ -84,7 +103,7 @@ __global__ void ComputeFreqNew(int *Index, int *Freq, lint *start, int *length, 
       int id_freq = (fourk * i) + Index[idx];
       if (threadIdx.x < length[i]-1)
       {
-         atomicAdd(&Freq[id_freq], 1);
+         atomicAdd(&counter->Freq, 1);
       }
    }
 }

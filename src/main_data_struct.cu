@@ -16,7 +16,7 @@ Istitution: National Laboratory for Scientific Computing
 
 //*** Global Variables ***
 struct read *chunk;
-lint *nS, *nN;
+lint *n_sequence, *n_concat_sequence_length;
 int offset;
 int device;
 int k;
@@ -106,7 +106,7 @@ int SelectDevice(int devCount)
 return device;
 }
 
-struct read* SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lint max, lint gnS, lint *nS, lint gnN, lint *nN, int nt)
+struct read* SelectChunkRemain(struct read *rd, ushort chunkSize, ushort id_chunk, lint max, lint gnS, lint *n_sequence, lint gnN, lint *n_concat_sequence_length, int nt)
 {
    struct read *chunk;
    lint i;
@@ -116,21 +116,25 @@ struct read* SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lin
    // Size to be allocated
    for (i = 0; i < max; i++)
    {
-      lint id = chunkSize*it + i;
+      lint id = chunkSize*id_chunk + i;
       if (id > gnS-1)
       {
          break;
       }
       length += rd->length[id]+1;
    }
+    int size_of_index_vector = length - k + 1;
 
-   cudaMallocHost((void**)&chunk, sizeof(struct read));
+
+    cudaMallocHost((void**)&chunk, sizeof(struct read));
    cudaMallocHost((void**)&chunk->data, sizeof(char)*length);
    cudaMallocHost((void**)&chunk->length, sizeof(int)*chunkSize);
    cudaMallocHost((void**)&chunk->start, sizeof(lint)*chunkSize);
+    cudaMallocHost((void**)&chunk[id_chunk].counter, sizeof(struct counter)*size_of_index_vector);
 
-   // Copy rd->data to chunk->data
-   lint start = rd->start[chunkSize*it];
+
+    // Copy rd->data to chunk->data
+   lint start = rd->start[chunkSize*id_chunk];
    lint end = start + (lint)length;
 
    #pragma omp parallel for num_threads(nt)
@@ -139,68 +143,77 @@ struct read* SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lin
       chunk->data[j-start] = rd->data[j];
    }
 
-   chunk->length[0] = rd->length[chunkSize*it];
+   chunk->length[0] = rd->length[chunkSize*id_chunk];
    chunk->start[0] = 0;
 
    // Copy start and length
    for (i = 1; i < max; i++)
    {
-      lint id = chunkSize*it + i;
+      lint id = chunkSize*id_chunk + i;
       chunk->length[i] = rd->length[id];
       chunk->start[i] = chunk->start[i-1]+(chunk->length[i-1]+1);
    }
 
-   *nN = length;
-   *nS = max;
+   *n_concat_sequence_length = length;
+   *n_sequence = max;
 return chunk;
 }
 
 
-void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort chunkSize, lint max, lint gnS, lint *nS, lint gnN, lint *nN, int nt)
+void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort chunkSize, lint max, lint gnS, lint *n_sequence, lint gnN, lint *n_concat_sequence_length, int nt, int k)
 {
-   lint i, j, it;
+   lint i, j, id_chunk;
 
-   for (it = 0; it < nChunk; it++)
+   for (id_chunk = 0; id_chunk < nChunk; id_chunk++)
    {
       lint length = 0;
 
       // Size to be allocated
       for (i = 0; i < max; i++)
       {
-         lint id = chunkSize*it + i;
+         lint id = chunkSize*id_chunk + i;
          if (id > gnS-1)
          {
             break;
          }
          length += rd->length[id]+1;
       }
+      int size_of_index_vector = length - k + 1;
 
-      cudaMallocHost((void**)&chunk[it].data, sizeof(char)*length);
-      cudaMallocHost((void**)&chunk[it].length, sizeof(int)*chunkSize);
-      cudaMallocHost((void**)&chunk[it].start, sizeof(lint)*chunkSize);
+      cudaMallocHost((void**)&chunk[id_chunk].data, sizeof(char)*length);
+      cudaMallocHost((void**)&chunk[id_chunk].length, sizeof(int)*chunkSize);
+      cudaMallocHost((void**)&chunk[id_chunk].start, sizeof(lint)*chunkSize);
+      cudaMallocHost((void**)&chunk[id_chunk].counter, sizeof(struct counter)*size_of_index_vector);
 
       // Copy rd->data to chunk->data
-      lint start = rd->start[chunkSize*it];
+      lint start = rd->start[chunkSize*id_chunk];
       lint end = start + (lint)length;
       #pragma omp parallel for num_threads(nt)
       for (j = start; j < end; j++)
       {
-         chunk[it].data[j-start] = rd->data[j];
+         chunk[id_chunk].data[j-start] = rd->data[j];
       }
 
-      chunk[it].length[0] = rd->length[chunkSize*it];
-      chunk[it].start[0] = 0;
+      chunk[id_chunk].length[0] = rd->length[chunkSize*id_chunk];
+      chunk[id_chunk].start[0] = 0;
+       cudaMallocHost((void**)&rd->counter, sizeof(struct counter)*rd->n_combination);
+       for(int d = 0; d < rd->n_combination; d++){
+           cudaMallocHost((void**)&rd->counter[d]->index, sizeof(int));
+           rd->counter->index = -1;
+           cudaMallocHost((void**)&rd->counter[d]->Freq, sizeof(int));
+           rd->counter->Freq = 0;
+       }
 
       // Copy start and length
       for (i = 1; i < max; i++)
       {
-         lint id = chunkSize*it + i;
-         chunk[it].length[i] = rd->length[id];
-         chunk[it].start[i] = chunk[it].start[i-1]+(chunk[it].length[i-1]+1);
+         lint id = chunkSize*id_chunk + i;
+         chunk[id_chunk].length[i] = rd->length[id];
+         chunk[id_chunk].start[i] = chunk[id_chunk].start[i-1]+(chunk[id_chunk].length[i-1]+1);
       }
 
-      nN[it] = length;
-      nS[it] = max;
+      n_concat_sequence_length[id_chunk] = length;
+      n_sequence[id_chunk] = max;
    }
 }
 
@@ -218,7 +231,7 @@ void *LaunchKmer(void* threadId)
    int i = 0;
    for (i = start; i < end; i++)
    {
-      kmer_main(&chunk[i], nN[i], nS[i], k, device);
+      kmer_main(&chunk[i], n_concat_sequence_length[i], n_sequence[i], k, device);
       cudaStreamSynchronize(0);
       cudaFreeHost(chunk[i].data);
       cudaFreeHost(chunk[i].length);
@@ -269,9 +282,9 @@ int main(int argc, char* argv[])
    int nChunk = floor(gnS/chunkSize);
    int i = 0;
    cudaMallocHost((void**)&chunk, sizeof(struct read)*nChunk);
-   cudaMallocHost((void**)&nS, sizeof(lint)*nChunk);
-   cudaMallocHost((void**)&nN, sizeof(lint)*nChunk);
-   SelectChunk(chunk, nChunk, rd, chunkSize, chunkSize, gnS, nS, gnN, nN, nt);
+   cudaMallocHost((void**)&n_sequence, sizeof(lint)*nChunk);
+   cudaMallocHost((void**)&n_concat_sequence_length, sizeof(lint)*nChunk);
+   SelectChunk(chunk, nChunk, rd, chunkSize, chunkSize, gnS, n_sequence, gnN, n_concat_sequence_length, nt);
 
    device = SelectDevice(devCount);
    offset = floor(nChunk/devCount);
@@ -279,12 +292,7 @@ int main(int argc, char* argv[])
 
    for (i = 0; i < devCount; i++)
    {
-<<<<<<< HEAD
       pthread_create(&threads[i], NULL, LaunchKmer, (void*)i);
-=======
-
-      pthread_create(&threads[i], NULL, LaunchKmer, (void*) i);
->>>>>>> parent of 2da2aba... ~ Stream implementation
    }
 
    for (i = 0; i < devCount; i++)
@@ -295,7 +303,7 @@ int main(int argc, char* argv[])
    int threadRemain = nChunk - (offset*devCount);
    if (threadRemain > 0)
    {
-      kmer_main(&chunk[nChunk-1], nN[nChunk-1], nS[nChunk-1], k, device);
+      kmer_main(&chunk[nChunk-1], n_concat_sequence_length[nChunk-1], n_sequence[nChunk-1], k, device);
    }
 
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
