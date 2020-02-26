@@ -25,14 +25,14 @@ struct read// Used to read sequences
    char *data;
    int *length;
    int *n_combination;
-   struct *counter;
+   struct counter *counter;
    lint *start;
    struct read *next;
 };
 
 struct counter {
-    int *index;
-    int *Freq;
+    int index;
+    int Freq;
 };
 
 #endif

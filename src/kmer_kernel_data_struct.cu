@@ -89,21 +89,21 @@ __global__ void ComputeFreq(int *Index, int *Freq, lint *start, int *length, ush
 }
 
 //New way to compute k-mer frequency
-__global__ void ComputeFreqNew(struct counter *counter, lint *start, int *length, ushort offset, int k, lint nS)
-{
-
-   int blx = blockIdx.x;
-
-   int st = blx * offset;
-   int nd = st + offset;
-
-   for (int i = st; i < nd; i++)
-   {
-      int idx = start[i] + threadIdx.x;
-      int id_freq = (fourk * i) + Index[idx];
-      if (threadIdx.x < length[i]-1)
-      {
-         atomicAdd(&counter->Freq, 1);
-      }
-   }
-}
+//__global__ void ComputeFreqNew(struct counter *counter, lint *start, int *length, ushort offset, int k, lint nS)
+//{
+//
+//   int blx = blockIdx.x;
+//
+//   int st = blx * offset;
+//   int nd = st + offset;
+//
+//   for (int i = st; i < nd; i++)
+//   {
+//      int idx = start[i] + threadIdx.x;
+//      int id_freq = (fourk * i) + Index[idx];
+//      if (threadIdx.x < length[i]-1)
+//      {
+//         atomicAdd(&counter->Freq, 1);
+//      }
+//   }
+//}
