@@ -47,10 +47,10 @@ __global__ void ComputeIndex(char *Seq, struct counter *counter, const int k, li
          __threadfence();
          for (int t = 0; t < *n_combination; t++){
              if (counter[t].index == -1){
-                 atomicAdd(counter[t].index, index);// Value of the combination
-                 atomicAdd(counter[t].Freq, 1);// Value of the combination
+                 atomicAdd(*counter[t]->index, index);// Value of the combination
+                 atomicAdd(*counter[t]->Freq, 1);// Value of the combination
              } else {
-                 atomicAdd(counter[t].Freq, 1);// Value of the combination
+                 atomicAdd(counter[t]->index, 1);// Value of the combination
              }
          }
          __syncthreads();

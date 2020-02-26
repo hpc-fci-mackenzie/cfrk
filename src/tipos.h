@@ -31,8 +31,8 @@ struct read// Used to read sequences
 };
 
 struct counter {
-    int index;
-    int Freq;
+    int *index;
+    int *Freq;
 };
 
 #endif
