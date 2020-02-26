@@ -30,7 +30,7 @@ struct read// Used to read sequences
    struct read *next;
 };
 
-struct counter{
+struct counter {
     int *index;
     int *Freq;
 };

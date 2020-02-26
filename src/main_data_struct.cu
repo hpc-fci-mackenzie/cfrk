@@ -10,7 +10,7 @@ Istitution: National Laboratory for Scientific Computing
 #include <stdint.h>
 #include <omp.h>
 #include <string.h>
-#include "kmer.cuh"
+#include "kmer_data_struct.cuh"
 #include "tipos.h"
 #include "fastaIO.h"
 
@@ -178,7 +178,7 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
          }
          length += rd->length[id]+1;
       }
-      int size_of_index_vector = length - k + 1;
+      int size_of_index_vector = length - k + 1; // c = L - k + 1 296/1024
 
       cudaMallocHost((void**)&chunk[id_chunk].data, sizeof(char)*length);
       cudaMallocHost((void**)&chunk[id_chunk].length, sizeof(int)*chunkSize);
