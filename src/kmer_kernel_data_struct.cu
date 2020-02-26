@@ -28,7 +28,7 @@ __global__ void ComputeIndex(char *Seq, struct counter *counter, const int k, li
 
    for(lint id = start; id < end; id++)
    {
-      lint index = 0;
+      int index = 0;
       if (id < nN)
       {
          for( lint i = 0; i < k; i++ )
@@ -46,8 +46,8 @@ __global__ void ComputeIndex(char *Seq, struct counter *counter, const int k, li
          }//End for i
          __threadfence();
          for (int t = 0; t < *n_combination; t++){
-             if (counter[t].index = -1){
-                 atomicAdd(counter[t].index,index);// Value of the combination
+             if (counter[t].index == -1){
+                 atomicAdd(counter[t].index, index);// Value of the combination
                  atomicAdd(counter[t].Freq, 1);// Value of the combination
              } else {
                  atomicAdd(counter[t].Freq, 1);// Value of the combination
