@@ -1,2 +1,11 @@
 /.idea
 *.o
+CppProperties.json
+.vs/ProjectSettings.json
+.vs/slnx.sqlite
+.vs/VSWorkspaceState.json
+.vs/cfrk/v16/.suo
+.vs/cfrk/v16/Browse.VC.db
+.vs/cfrk/v16/ipch/AutoPCH/5d1df50d9975e3ff/KMER_KERNEL_DATA_STRUCT.ipch
+.vs/cfrk/v16/ipch/AutoPCH/7c28d208e3c2ae8f/KMER_MAIN_DATA_STRUCT.ipch
+.vs/cfrk/v16/ipch/AutoPCH/ad92b9023e1a4db7/KMER_MAIN_DATA_STRUCT.ipch
