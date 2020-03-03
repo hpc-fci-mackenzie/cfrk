@@ -76,7 +76,7 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
 }
 
 //-------------------------------------------------------------------------------------------
-void ProcessData(struct seq *seq, struct read *rd, lint n_concat_sequence_length, lint n_sequence, ushort flag)
+void ProcessData(struct seq *seq, struct read *rd, lint n_concat_sequence_length, lint n_sequence, ushort flag, int k)
 {
    lint i, j, pos = 0, seqCount = 0;
 
@@ -112,7 +112,7 @@ void ProcessData(struct seq *seq, struct read *rd, lint n_concat_sequence_length
 }
 
 //-------------------------------------------------------------------------
-struct seq *ReadFASTASequences(char *file, lint *n_concat_sequence_length, lint *n_sequence, struct read *rd, ushort flag)
+struct seq *ReadFASTASequences(char *file, lint *n_concat_sequence_length, lint *n_sequence, struct read *rd, ushort flag, int k)
 {
    struct seq *seq;
    int len;
@@ -150,7 +150,7 @@ struct seq *ReadFASTASequences(char *file, lint *n_concat_sequence_length, lint 
       }
    }
 
-   ProcessData(seq, rd, n_concat_sequence_length_partial, *n_sequence, flag);
+   ProcessData(seq, rd, n_concat_sequence_length_partial, *n_sequence, flag, k);
 
    *n_concat_sequence_length = n_concat_sequence_length_partial + *n_sequence;
 

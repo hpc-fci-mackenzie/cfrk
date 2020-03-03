@@ -23,7 +23,7 @@ int k;
 char file_out[512];
 //************************
 
-void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
+/*void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
 {
    FILE *out;
    int cont = 0;
@@ -58,7 +58,7 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
       }
    }
    fclose(out);
-}
+}*/
 
 void DeviceInfo(uint8_t device)
 {
@@ -106,7 +106,7 @@ int SelectDevice(int devCount)
 return device;
 }
 
-struct read* SelectChunkRemain(struct read *rd, ushort chunkSize, ushort id_chunk, lint max, lint gnS, lint *n_sequence, lint gnN, lint *n_concat_sequence_length, int nt)
+struct read* SelectChunkRemain(struct read *rd, ushort chunkSize, ushort id_chunk, lint max, lint gnS, lint *n_sequence, lint gnN, lint *n_concat_sequence_length, int nt, int k)
 {
    struct read *chunk;
    lint i;
@@ -196,12 +196,13 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
 
       chunk[id_chunk].length[0] = rd->length[chunkSize*id_chunk];
       chunk[id_chunk].start[0] = 0;
-       cudaMallocHost((void**)&rd->counter, sizeof(struct counter)*rd->n_combination);
-       for(int d = 0; d < rd->n_combination; d++){
+      int n_combination = rd->n_combination;
+       cudaMallocHost((void**)&rd->counter, sizeof(struct counter)*n_combination);
+       for(int d = 0; d < n_combination; d++){
            cudaMallocHost((void**)&rd->counter[d]->index, sizeof(int));
-           rd->counter->index = -1;
+           *rd->counter->index = -1;
            cudaMallocHost((void**)&rd->counter[d]->Freq, sizeof(int));
-           rd->counter->Freq = 0;
+           *rd->counter->Freq = 0;
        }
 
       // Copy start and length
@@ -273,7 +274,7 @@ int main(int argc, char* argv[])
    struct read *rd;
    cudaMallocHost((void**)&rd, sizeof(struct read));
    // rd = (struct read*)malloc(sizeof(struct read));
-   struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
+   struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1, k);
    printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
    lint et = time(NULL);
 
@@ -284,7 +285,7 @@ int main(int argc, char* argv[])
    cudaMallocHost((void**)&chunk, sizeof(struct read)*nChunk);
    cudaMallocHost((void**)&n_sequence, sizeof(lint)*nChunk);
    cudaMallocHost((void**)&n_concat_sequence_length, sizeof(lint)*nChunk);
-   SelectChunk(chunk, nChunk, rd, chunkSize, chunkSize, gnS, n_sequence, gnN, n_concat_sequence_length, nt);
+   SelectChunk(chunk, nChunk, rd, chunkSize, chunkSize, gnS, n_sequence, gnN, n_concat_sequence_length, nt, k);
 
    device = SelectDevice(devCount);
    offset = floor(nChunk/devCount);
@@ -308,7 +309,7 @@ int main(int argc, char* argv[])
 
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
    lint rnS, rnN;
-   struct read *chunk_remain = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN, nt);
+   struct read *chunk_remain = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN, nt, k);
    kmer_main(chunk_remain, rnN, rnS, k, device);
 
    // st = time(NULL);
