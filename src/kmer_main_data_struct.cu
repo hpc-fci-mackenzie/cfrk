@@ -34,10 +34,10 @@ int *d_start;
 
    struct counter *d_counter;
    int n_combination;
-    if ( cudaMalloc ((void**)&d_counter, sizeof(struct counter)*rd.n_combination) != cudaSuccess ) printf("\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMemcpyAsync(&n_combination, rd.n_combination, sizeof(int), cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
+    if ( cudaMalloc ((void**)&d_counter, sizeof(struct counter)*n_combination) != cudaSuccess ) printf("\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
     if ( cudaMalloc ((void**)&n_combination, sizeof(int)) != cudaSuccess ) printf("\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
-    if ( cudaMemcpyAsync(d_counter, rd->counter, sizeof(struct counter)*rd.n_combination, cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
-    if ( cudaMemcpyAsync(&n_combination, rd.n_combination, sizeof(int), cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
+    if ( cudaMemcpyAsync(d_counter, rd->counter, sizeof(struct counter)*n_combination, cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
     for(int d = 0; d < n_combination; d++){
         cudaMalloc((void**)&d_counter[d].index, sizeof(int));
         *d_counter[d].index = -1;
@@ -127,8 +127,8 @@ int *d_start;
 
    //cudaFree(rd);
 
-   if ( cudaMallocHost((void**)&rd->counter, sizeof(struct counter)*rd.n_combination) != cudaSuccess) printf("\n[Error 11] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMemcpy(rd->counter, d_counter, sizeof(struct counter)*rd.n_combination, cudaMemcpyDeviceToHost) != cudaSuccess) printf("\n[Error 12] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMallocHost((void**)&rd->counter, sizeof(struct counter)*n_combination) != cudaSuccess) printf("\n[Error 11] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMemcpy(rd->counter, d_counter, sizeof(struct counter)*n_combination, cudaMemcpyDeviceToHost) != cudaSuccess) printf("\n[Error 12] %s\n", cudaGetErrorString(cudaGetLastError()));
 
 
 //************************************************
