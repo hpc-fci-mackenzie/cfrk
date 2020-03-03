@@ -120,7 +120,7 @@ int *d_start;
 
 //   SetMatrix<<<grid[0], block[0]>>>(d_Index, offset[0], -1, n_concat_sequence_length);
 //   SetMatrix<<<grid[3], block[3]>>>(d_Freq, offset[3], 0, nF);
-   ComputeIndex<<<grid[0], block[0]>>>(d_Seq, d_counter, k, n_concat_sequence_length, offset[0], n_combination);
+   ComputeIndex<<<grid[0], block[0]>>>(d_Seq, d_counter, k, n_concat_sequence_length, offset[0], &n_combination);
    //ComputeFreq<<<grid[1], block[1]>>>(d_Index, d_Freq, d_start, d_length, offset[1], n_possible_combinations, n_sequence, n_concat_sequence_length);
 //   ComputeFreqNew<<<grid[2],block[2]>>>(counter d_start, d_length, offset[2], k, n_sequence);
 
