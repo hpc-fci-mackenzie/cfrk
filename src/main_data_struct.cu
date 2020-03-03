@@ -199,9 +199,9 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
       int n_combination = *rd->n_combination;
        cudaMallocHost((void**)&rd->counter, sizeof(struct counter)*n_combination);
        for(int d = 0; d < n_combination; d++){
-           cudaMallocHost((void**) rd->counter[d]->index, sizeof(int));
+           cudaMallocHost((void**) *rd->counter[d]->index, sizeof(int));
            *rd->counter->index = -1;
-           cudaMallocHost((void**) rd->counter[d]->Freq, sizeof(int));
+           cudaMallocHost((void**) *rd->counter[d]->Freq, sizeof(int));
            *rd->counter->Freq = 0;
        }
 
