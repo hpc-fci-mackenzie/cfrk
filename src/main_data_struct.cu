@@ -225,7 +225,7 @@ void *LaunchKmer(void* threadId)
    int start = tid * offset;
    int end = start+offset;
 
-   printf("\t\ttid: %d\n", tid);
+   printf("\t\ttid: %d\n", (int) tid);
 
    DeviceInfo(tid);
 
@@ -267,7 +267,7 @@ int main(int argc, char* argv[])
 
    strcpy(file_out, argv[2]);
 
-   printf("\ndataset: %s, out: %s, k: %d, chunkSize: %d\n", argv[1], file_out, k, chunkSize);
+   printf("\ndataset: %s, out: %s, k: %d, chunkSize: %d\n", argv[1], file_out, k, (int) chunkSize);
 
    lint st = time(NULL);
    puts("\n\n\t\tReading seqs!!!");
