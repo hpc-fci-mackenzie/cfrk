@@ -7,7 +7,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device);
 
 __global__ void SetMatrix(int *Mat, ushort offset, int val, int nF);
 
-__global__ void ComputeIndex(char *Seq, struct counter *, const int k, lint nN, ushort offset, int *n_combination);
+__global__ void ComputeIndex(char *Seq, struct counter *, const int k, lint nN, ushort offset, int n_combination);
 
 __global__ void ComputeFreq(int *Index, int *Freq, lint *start, int *length, ushort offset, int fourk, lint nS, lint nN);
 
