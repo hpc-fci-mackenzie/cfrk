@@ -36,8 +36,8 @@ int *d_start;
    int n_combination;
     if ( cudaMalloc ((void**)&d_counter, sizeof(struct counter)*rd.n_combination) != cudaSuccess ) printf("\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
     if ( cudaMalloc ((void**)&n_combination, sizeof(int)) != cudaSuccess ) printf("\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
-    if ( cudaMemcpyAsync(counter, rd->counter, sizeof(struct counter)*rd.n_combination, cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
-    if ( cudaMemcpyAsync(n_combination, rd.n_combination, sizeof(int), cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
+    if ( cudaMemcpyAsync(d_counter, rd->counter, sizeof(struct counter)*rd.n_combination, cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
+    if ( cudaMemcpyAsync(&n_combination, rd.n_combination, sizeof(int), cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
     for(int d = 0; d < n_combination; d++){
         cudaMalloc((void**)&d_counter[d].index, sizeof(int));
         *d_counter[d].index = -1;
@@ -133,8 +133,9 @@ int *d_start;
 
 //************************************************
    cudaFree(d_Seq);
-   cudaFree(d_Freq);
-   cudaFree(d_Index);
+   // cudaFree(d_Freq);
+   // cudaFree(d_Index);
+   cudaFree(d_counter);
    cudaFree(d_start);
    cudaFree(d_length);
 //---------------------------------------------------------------------------
