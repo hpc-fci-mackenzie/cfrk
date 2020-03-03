@@ -8,7 +8,7 @@ cfrk:
 	nvcc $(INTELFLAGS) $(NVCCFLAGS) kmer_kernel_data_struct.cu -c
 	nvcc $(INTELFLAGS) $(NVCCFLAGS) kmer_main_data_struct.cu -c
 	nvcc main_data_struct.cu $(INTELFLAGS) $(NVCCFLAGS) -c
-	nvcc main.o kmer_kernel.o kmer_main.o $(NVCCFLAGS) $(INTELFLAGS) --verbose -o ../bin/cfrk
-	rm main.o kmer_main.o kmer_kernel.o
+	nvcc main_data_struct.o kmer_kernel_data_struct.o kmer_main_data_struct.o $(NVCCFLAGS) $(INTELFLAGS) --verbose -o ../bin/cfrk
+	rm main_data_struct.o kmer_main_data_struct.o kmer_kernel_data_struct.o
 clean:
 	rm -f ../bin/* ./*.o
