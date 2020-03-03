@@ -34,7 +34,7 @@ int *d_start;
 
    struct counter *d_counter;
    int n_combination;
-   if ( cudaMemcpyAsync(&n_combination, rd.n_combination, sizeof(int), cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMemcpyAsync(&n_combination, rd->n_combination, sizeof(int), cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
     if ( cudaMalloc ((void**)&d_counter, sizeof(struct counter)*n_combination) != cudaSuccess ) printf("\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
     if ( cudaMalloc ((void**)&n_combination, sizeof(int)) != cudaSuccess ) printf("\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
     if ( cudaMemcpyAsync(d_counter, rd->counter, sizeof(struct counter)*n_combination, cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
