@@ -281,7 +281,7 @@ int main(int argc, char* argv[])
    printf("\n\t\tReading time: %ld\n", (et-st));
 
    int nChunk = floor(gnS/chunkSize);
-   int i = 0;
+   lint i = 0;
    cudaMallocHost((void**)&chunk, sizeof(struct read)*nChunk);
    cudaMallocHost((void**)&n_sequence, sizeof(lint)*nChunk);
    cudaMallocHost((void**)&n_concat_sequence_length, sizeof(lint)*nChunk);
