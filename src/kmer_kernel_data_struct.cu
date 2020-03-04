@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <cuda.h>
-#include "tipos.h"
+#include "tipos_data_struct.h"
 
 //Set Matrix values
 __global__ void SetMatrix(int *Mat, ushort offset, int val, int nF)

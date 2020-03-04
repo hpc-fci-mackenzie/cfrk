@@ -1,7 +1,7 @@
 #ifndef _kmer_cuh
 #define _kmer_cuh
 
-#include "tipos.h"
+#include "tipos_data_struct.h"
 
 void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device);
 

@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
-#include "tipos.h"
+#include "tipos_data_struct.h"
 #include "kmer_data_struct.cuh"
 
 void GetDeviceProp(uint8_t device, lint *maxGridSize, lint *maxThreadDim, lint *deviceMemory)

@@ -11,7 +11,7 @@ Istitution: National Laboratory for Scientific Computing
 #include <omp.h>
 #include <string.h>
 #include "kmer_data_struct.cuh"
-#include "tipos.h"
+#include "tipos_data_struct.h"
 #include "fastaIO.h"
 
 //*** Global Variables ***

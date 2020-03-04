@@ -104,28 +104,16 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
 
 //************************************************
 
-<<<<<<< HEAD
    SetMatrix<<<grid[0], block[0]>>>(d_Index, offset[0], -1, nN);
    SetMatrix<<<grid[3], block[3]>>>(d_Freq, offset[3], 0, nF);
    ComputeIndex<<<grid[0], block[0]>>>(d_Seq, d_Index, k, nN, offset[0]);
    //ComputeFreq<<<grid[1], block[1]>>>(d_Index, d_Freq, d_start, d_length, offset[1], fourk, nS, nN);
    ComputeFreqNew<<<grid[2],block[2]>>>(d_Index, d_Freq, d_start, d_length, offset[2], fourk, nS);
-=======
-   SetMatrix<<<grid[0], block[0], 0, *stream>>>(d_Index, offset[0], -1, nN);
-   SetMatrix<<<grid[3], block[3], 0, *stream>>>(d_Freq, offset[3], 0, nF);
-   ComputeIndex<<<grid[0], block[0], 0, *stream>>>(d_Seq, d_Index, k, nN, offset[0]);
-   //ComputeFreq<<<grid[1], block[1]>>>(d_Index, d_Freq, d_start, d_length, offset[1], fourk, nS, nN);
-   ComputeFreqNew<<<grid[2],block[2], 0, *stream>>>(d_Index, d_Freq, d_start, d_length, offset[2], fourk, nS);
->>>>>>> parent of 2da2aba... ~ Stream implementation
 
    //cudaFree(rd);
 
    if ( cudaMallocHost((void**)&rd->Freq, size[3]) != cudaSuccess) printf("\n[Error 9] %s\n", cudaGetErrorString(cudaGetLastError()));
-<<<<<<< HEAD
    if ( cudaMemcpy(rd->Freq, d_Freq, size[3], cudaMemcpyDeviceToHost) != cudaSuccess) printf("\n[Error 10] %s\n", cudaGetErrorString(cudaGetLastError()));
-=======
-   if ( cudaMemcpyAsync(rd->Freq, d_Freq, size[3], cudaMemcpyDeviceToHost, *stream) != cudaSuccess) printf("\n[Error 10] %s\n", cudaGetErrorString(cudaGetLastError()));
->>>>>>> parent of 2da2aba... ~ Stream implementation
 
 
 //************************************************
