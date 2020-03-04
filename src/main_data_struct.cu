@@ -12,7 +12,7 @@ Istitution: National Laboratory for Scientific Computing
 #include <string.h>
 #include "kmer_data_struct.cuh"
 #include "tipos_data_struct.h"
-#include "fastaIO.h"
+#include "fastaIO_struct.h"
 
 //*** Global Variables ***
 struct read *chunk;

@@ -11,3 +11,4 @@ CppProperties.json
 .vs/cfrk/v16/ipch/AutoPCH/ad92b9023e1a4db7/KMER_MAIN_DATA_STRUCT.ipch
 bin/cfrk
 bin/cfrk
+.vscode/c_cpp_properties.json
