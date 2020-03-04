@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "tipos.h"
-#include "kmer.cuh"
+#include "kmer_pipeline.cuh"
 
 void GetDeviceProp(uint8_t device, lint *maxGridSize, lint *maxThreadDim, lint *deviceMemory)
 {
