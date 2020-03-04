@@ -5,6 +5,12 @@ INTELFLAGS=-Xcompiler -fopenmp -lpthread
 default: cfrk
 
 cfrk:
+	nvcc $(INTELFLAGS) $(NVCCFLAGS) kmer_kernel.cu -c
+	nvcc $(INTELFLAGS) $(NVCCFLAGS) kmer_main.cu -c
+	nvcc main.cu $(INTELFLAGS) $(NVCCFLAGS) -c
+	nvcc main.o kmer_kernel.o kmer_main.o $(NVCCFLAGS) $(INTELFLAGS) -o ../bin/cfrk
+	rm main.o kmer_main.o kmer_kernel.o
+cfrk-data-struct:
 	nvcc $(INTELFLAGS) $(NVCCFLAGS) kmer_kernel_data_struct.cu -c
 	nvcc $(INTELFLAGS) $(NVCCFLAGS) kmer_main_data_struct.cu -c
 	nvcc main_data_struct.cu $(INTELFLAGS) $(NVCCFLAGS) -c
