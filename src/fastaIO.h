@@ -10,8 +10,6 @@
 #include "tipos.h"
 
 int GetNs(char *FileName)
-/*Get the length of the sequence
- * */
 {
    char temp[64], cmd[512];
    FILE *in;
@@ -23,10 +21,7 @@ int GetNs(char *FileName)
    return atoi(temp);
 }
 
-struct seq *ReadFasta(char *fileName, lint *n_sequence)
-/*
- * Create sequence struct from file information
- * */
+struct seq *ReadFasta(char *fileName, lint *nS)
 {
    FILE *fastaFile;
    char *line = NULL, *aux;
@@ -35,8 +30,8 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
    struct seq *seq;
    int count = -1, flag = 0; 
 
-   *n_sequence = GetNs(fileName); // Gets the sequence as Integer
-   seq = (struct seq*)malloc(sizeof(struct seq) * *n_sequence); // Allocate sequence memory on Main Memory
+   *nS = GetNs(fileName);
+   seq = (struct seq*)malloc(sizeof(struct seq) * *nS);
        
    if ((fastaFile = fopen(fileName, "r")) == NULL) exit(EXIT_FAILURE);
           
@@ -67,7 +62,7 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
              seq[count].read = (char*)malloc(sizeof(char)*(size+oldRead));
              strcat(seq[count].read, aux);
              strcat(seq[count].read, line);
-	     seq[count].len = strlen(seq[count].read) - 1; // len variable have no use since the code uses strlen function to get Length information
+	     seq[count].len = strlen(seq[count].read) - 1;
              aux = NULL;
           }
        }
@@ -76,24 +71,22 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
 }
 
 //-------------------------------------------------------------------------------------------
-void ProcessData(struct seq *seq, struct read *rd, lint n_concat_sequence_length, lint n_sequence, ushort flag, int k)
+void ProcessData(struct seq *seq, struct read *rd, lint nN, lint nS, ushort flag)
 {
    lint i, j, pos = 0, seqCount = 0;
 
-   cudaMallocHost((void**)&rd->data, sizeof(char)*(n_concat_sequence_length + n_sequence));
-   cudaMallocHost((void**)&rd->length, sizeof(int)*n_sequence);
-   cudaMallocHost((void**)&rd->start, sizeof(lint)*n_sequence);
-   cudaMallocHost((void**)&rd->start, sizeof(int)*n_sequence);
-   cudaMallocHost((void**)&rd->n_combination, sizeof(int)*n_sequence);
+   cudaMallocHost((void**)&rd->data, sizeof(char)*(nN + nS));
+   cudaMallocHost((void**)&rd->length, sizeof(int)*nS);
+   cudaMallocHost((void**)&rd->start, sizeof(lint)*nS);
 
-   //rd->data = (char*)malloc(sizeof(char)*(n_concat_sequence_length + n_sequence));
-   //rd->length = (int*)malloc(sizeof(int)*n_sequence);
-   //rd->start = (lint*)malloc(sizeof(lint)*n_sequence);
+   //rd->data = (char*)malloc(sizeof(char)*(nN + nS));
+   //rd->length = (int*)malloc(sizeof(int)*nS);
+   //rd->start = (lint*)malloc(sizeof(lint)*nS);
 
 
    rd->start[0] = 0;
 
-   for (j = 0; j < n_sequence; j++)
+   for (j = 0; j < nS; j++)
    {
       for(i = 0; i < seq[j].len; i++)
       {
@@ -103,28 +96,25 @@ void ProcessData(struct seq *seq, struct read *rd, lint n_concat_sequence_length
       rd->data[pos] = -1;
       pos++;
       rd->length[seqCount] = seq[j].len;
-      rd->n_combination = rd->length - k +1;
       seqCount++;
       rd->start[seqCount] = pos;
-
-
    }
 }
 
 //-------------------------------------------------------------------------
-struct seq *ReadFASTASequences(char *file, lint *n_concat_sequence_length, lint *n_sequence, struct read *rd, ushort flag, int k)
+struct seq *ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, ushort flag)
 {
    struct seq *seq;
    int len;
-   lint n_concat_sequence_length_partial = 0; // total length of all sequence concatenated
+   lint lnN = 0;
    int i, j;
 
-   seq = ReadFasta(file, n_sequence);
+   seq = ReadFasta(file, nS);
 
-   for (i = 0; i < *n_sequence; i++)
+   for (i = 0; i < *nS; i++)
    {
       len = seq[i].len;
-      n_concat_sequence_length_partial += len;
+      lnN += len;
 
       seq[i].data = (char*)malloc(sizeof(char)*len);
 
@@ -150,9 +140,9 @@ struct seq *ReadFASTASequences(char *file, lint *n_concat_sequence_length, lint 
       }
    }
 
-   ProcessData(seq, rd, n_concat_sequence_length_partial, *n_sequence, flag, k);
+   ProcessData(seq, rd, lnN, *nS, flag);
 
-   *n_concat_sequence_length = n_concat_sequence_length_partial + *n_sequence;
+   *nN = lnN + *nS;
 
    return seq;
 }
