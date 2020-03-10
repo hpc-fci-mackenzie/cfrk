@@ -76,43 +76,53 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
 }
 
 //-------------------------------------------------------------------------------------------
-void ProcessData(struct seq *seq, struct read *rd, lint n_concat_sequence_length, lint n_sequence, ushort flag, int k)
+void ProcessData(struct seq *seq, struct chunk *chunk, lint n_concat_sequence_length, lint n_sequence, ushort flag, int k)
 {
-   lint i, j, pos = 0, seqCount = 0;
+   lint i, j, pos = 0, seqCount = 0, w;
 
-   cudaMallocHost((void**)&rd->data, sizeof(char)*(n_concat_sequence_length + n_sequence));
-   cudaMallocHost((void**)&rd->length, sizeof(int)*n_sequence);
-   cudaMallocHost((void**)&rd->start, sizeof(lint)*n_sequence);
-   cudaMallocHost((void**)&rd->start, sizeof(int)*n_sequence);
-   cudaMallocHost((void**)&rd->n_combination, sizeof(int)*n_sequence);
+   cudaMallocHost((void**)&chunk->data, sizeof(char)*(n_concat_sequence_length + n_sequence));
+   cudaMallocHost((void**)&chunk->length, sizeof(int)*n_sequence);
+   cudaMallocHost((void**)&chunk->start, sizeof(lint)*n_sequence);
+   cudaMallocHost((void**)&chunk->n_combination, sizeof(int));
+   cudaMallocHost((void**)&chunk->counter, sizeof(struct counter)*n_sequence);
 
    //rd->data = (char*)malloc(sizeof(char)*(n_concat_sequence_length + n_sequence));
    //rd->length = (int*)malloc(sizeof(int)*n_sequence);
    //rd->start = (lint*)malloc(sizeof(lint)*n_sequence);
 
 
-   rd->start[0] = 0;
+   chunk->start[0] = 0;
 
    for (j = 0; j < n_sequence; j++)
    {
       for(i = 0; i < seq[j].len; i++)
       {
-         rd->data[pos] = seq[j].data[i];
+         chunk->data[pos] = seq[j].data[i];
          pos++;
       }
-      rd->data[pos] = -1;
+      chunk->data[pos] = -1;
       pos++;
-      rd->length[seqCount] = seq[j].len;
-      rd->n_combination = rd->length - k +1;
+      chunk->length[seqCount] = seq[j].len;
+      // Initializing Counters X Read
+      if (chunk->length[seqCount] - k +1 > chunk->n_combination)
+      {
+         chunk->n_combination = chunk->length[seqCount] - k +1
+      }
+      cudaMallocHost((void**)&chunk->reads[j].counter, sizeof(struct read)*rd->reads[j].n_combination);
+      for (w = 0; w < chunk->reads[j].n_combination; w++)
+      {
+         cudaMallocHost((void**)&chunk->reads[j].counter[d].index, sizeof(int));
+         chunk->reads[j].counter[w].index = -1;
+         cudaMallocHost((void**)&chunk->reads[j].counter[d].frequence, sizeof(int));
+         chunk->reads[j].counter[w].frequence = 0;
+      }
       seqCount++;
-      rd->start[seqCount] = pos;
-
-
+      chunk->start[seqCount] = pos;
    }
 }
 
 //-------------------------------------------------------------------------
-struct seq *ReadFASTASequences(char *file, lint *n_concat_sequence_length, lint *n_sequence, struct read *rd, ushort flag, int k)
+struct seq *ReadFASTASequences(char *file, lint *n_concat_sequence_length, lint *n_sequence, struct chunk *chunk, ushort flag, int k)
 {
    struct seq *seq;
    int len;
@@ -150,7 +160,7 @@ struct seq *ReadFASTASequences(char *file, lint *n_concat_sequence_length, lint 
       }
    }
 
-   ProcessData(seq, rd, n_concat_sequence_length_partial, *n_sequence, flag, k);
+   ProcessData(seq, chunk, n_concat_sequence_length_partial, *n_sequence, flag, k);
 
    *n_concat_sequence_length = n_concat_sequence_length_partial + *n_sequence;
 

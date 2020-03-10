@@ -3,7 +3,7 @@
 #include "tipos_data_struct.h"
 
 //Set Matrix values
-__global__ void SetMatrix(int *Mat, ushort offset, int val, int nF)
+__global__ void SetMatrix(struct read *Mat, ushort offset, int val, int nF)
 {
    lint idx = threadIdx.x + (blockDim.x * blockIdx.x);
 
@@ -18,9 +18,9 @@ __global__ void SetMatrix(int *Mat, ushort offset, int val, int nF)
 }
 
 //Compute k-mer index
-__global__ void ComputeIndex(char *Seq, struct counter *counter, const int k, lint nN, ushort offset, int *n_combination)
+__global__ void ComputeFrequence(char *Seq, struct read *d_read, lint *start, int d_length const int k, lint nN, ushort offset)
 {
-   lint idx = threadIdx.x + (blockDim.x * blockIdx.x);
+   lint idx =  blockIdx.x;
 
    lint start = idx * offset;
    lint end   = start + offset;
@@ -28,7 +28,7 @@ __global__ void ComputeIndex(char *Seq, struct counter *counter, const int k, li
 
    for(lint id = start; id < end; id++)
    {
-      int index = 0;
+      int index = -1;
       if (id < nN)
       {
          for( lint i = 0; i < k; i++ )
@@ -40,70 +40,27 @@ __global__ void ComputeIndex(char *Seq, struct counter *counter, const int k, li
             }
             else
             {
-//               index = -1;
+               index = -1;
                break;
             }
          }//End for i
-         __threadfence();
-         for (int t = 0; t < *n_combination; t++){
-             if (*counter[t].index == -1){
-                 atomicAdd(counter[t].index, index);// Value of the combination
-                 atomicAdd(counter[t].Freq, 1);// Value of the combination
-             } else {
-                 atomicAdd(counter[t].index, 1);// Value of the combination
-             }
+         if(index != -1)
+         {
+            __threadfence();
+            for (int t = 0; t < *n_combination; t++){
+                if (*counter[t].index == -1){
+                    atomicAdd(counter[t].index, index);// Value of the combination
+                    atomicAdd(counter[t].frequence, 1);// Value of the combination
+                } else {
+                    atomicAdd(counter[t].frequence, 1);// Value of the combination
+                }
+            }
+            __syncthreads();
          }
-         __syncthreads();
+         
          if (n_combination_counter >= *n_combination) printf("ERROR: Counter greater them combination");
 
       }
    }//End for id
 }
 
-//Compute k-mer frequency
-// Change Index and Freq vectors by Struct
-/*
- *  struct X {
- *      int index;
- *      int count = 0;
- *  }
- * */
-__global__ void ComputeFreq(int *Index, int *Freq, lint *start, int *length, ushort offset, int fourk, lint nS, lint nN)
-{
-
-   int idx = threadIdx.x + (blockDim.x * blockIdx.x);
-
-   if (idx < nS)
-   {
-      int end = start[idx] + (length[idx] + 1);
-
-      for (int i = start[idx]; i < end; i++)
-      {
-         if (Index[i] != -1 && i < nN)
-         {
-            int pos = (fourk * idx) + Index[i];
-            Freq[pos] += 1;
-         }
-      }
-   }
-}
-
-//New way to compute k-mer frequency
-//__global__ void ComputeFreqNew(struct counter *counter, lint *start, int *length, ushort offset, int k, lint nS)
-//{
-//
-//   int blx = blockIdx.x;
-//
-//   int st = blx * offset;
-//   int nd = st + offset;
-//
-//   for (int i = st; i < nd; i++)
-//   {
-//      int idx = start[i] + threadIdx.x;
-//      int id_freq = (fourk * i) + Index[idx];
-//      if (threadIdx.x < length[i]-1)
-//      {
-//         atomicAdd(&counter->Freq, 1);
-//      }
-//   }
-//}

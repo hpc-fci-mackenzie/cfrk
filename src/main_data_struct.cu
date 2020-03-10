@@ -12,7 +12,7 @@ Istitution: National Laboratory for Scientific Computing
 #include <string.h>
 #include "kmer_data_struct.cuh"
 #include "tipos_data_struct.h"
-#include "fastaIO_struct.h"
+#include "fastaIO_data_struct.h"
 
 //*** Global Variables ***
 struct read *chunk;
@@ -160,7 +160,7 @@ return chunk;
 }
 
 
-void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort chunkSize, lint max, lint gnS, lint *n_sequence, lint gnN, lint *n_concat_sequence_length, int nt, int k)
+void SelectChunk(struct chunk *chunk, const int nChunk, struct chunk *rd, ushort chunkSize, lint max, lint gnS, lint *n_sequence, lint gnN, lint *n_concat_sequence_length, int nt, int k)
 {
    lint i, j, id_chunk;
 
@@ -197,12 +197,13 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
       chunk[id_chunk].length[0] = rd->length[chunkSize*id_chunk];
       chunk[id_chunk].start[0] = 0;
       int n_combination = *rd->n_combination;
-       cudaMallocHost((void**)&rd->counter, sizeof(struct counter)*n_combination);
-       for(int d = 0; d < n_combination; d++){
+      cudaMallocHost((void**)&rd->counter, sizeof(struct counter)*n_combination);
+      for(int d = 0; d < n_combination; d++)
+      {
            cudaMallocHost((void**) rd->counter[d].index, sizeof(int));
-           *rd->counter->index = -1;
+           *rd->counter[d].index = -1;
            cudaMallocHost((void**) rd->counter[d].Freq, sizeof(int));
-           *rd->counter->Freq = 0;
+           *rd->counter[d].frequence = 0;
        }
 
       // Copy start and length
@@ -271,7 +272,7 @@ int main(int argc, char* argv[])
 
    lint st = time(NULL);
    puts("\n\n\t\tReading seqs!!!");
-   struct read *rd;
+   struct chunk *rd;
    cudaMallocHost((void**)&rd, sizeof(struct read));
    // rd = (struct read*)malloc(sizeof(struct read));
    struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1, k);

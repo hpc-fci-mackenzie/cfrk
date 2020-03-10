@@ -20,19 +20,26 @@ struct seq
    int len;
 };
 
-struct read// Used to read sequences
+struct chunk// Used to read sequences
 {
    char *data;
    int *length;
+   lint *start;
    int *n_combination;
    struct counter *counter;
-   lint *start;
-   struct read *next;
+   // struct read *reads;
+   struct chunk *next;
+};
+
+struct read 
+{
+   
+   
 };
 
 struct counter {
     int *index;
-    int *Freq;
+    int *frequence;
 };
 
 #endif
