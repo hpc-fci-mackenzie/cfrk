@@ -2,35 +2,30 @@
 #include <cuda.h>
 #include "tipos_data_struct.h"
 
-//Set Matrix values
-__global__ void SetMatrix(struct read *Mat, ushort offset, int val, int nF)
-{
-   lint idx = threadIdx.x + (blockDim.x * blockIdx.x);
 
-   lint start = idx * offset;
-   lint end   = start + offset;
-
-   for(lint id = start; id < end; id++)
-   {
-      if (id < nF)
-         Mat[idx] = val;
-   }
-}
 
 //Compute k-mer index
-__global__ void ComputeFrequence(char *Seq, struct read *d_read, lint *start, int d_length const int k, lint nN, ushort offset)
+__global__ void ComputeFrequence(char *Seq, struct counter *d_counter, lint *d_start, int *d_length, const int k, lint nN, ushort offset, int n_sequence, int n_combination)
 {
    lint idx =  blockIdx.x;
 
    lint start = idx * offset;
    lint end   = start + offset;
-   int n_combination_counter = 0;
 
    for(lint id = start; id < end; id++)
    {
+      
       int index = -1;
       if (id < nN)
       {
+         lint id_sequence;
+         lint p;
+         for (p = 0; p < n_sequence; p++){
+            if(d_start[p] < id && id < (d_start[p] + d_length[p]))
+            {
+               id_sequence = p;
+            }
+         }
          for( lint i = 0; i < k; i++ )
          {
             char nuc = Seq[i + id];
@@ -47,19 +42,18 @@ __global__ void ComputeFrequence(char *Seq, struct read *d_read, lint *start, in
          if(index != -1)
          {
             __threadfence();
-            for (int t = 0; t < *n_combination; t++){
-                if (*counter[t].index == -1){
-                    atomicAdd(counter[t].index, index);// Value of the combination
-                    atomicAdd(counter[t].frequence, 1);// Value of the combination
-                } else {
-                    atomicAdd(counter[t].frequence, 1);// Value of the combination
+            for (int t = 0; t < n_combination; t++){
+                if (d_counter[id_sequence].index[t] == -1){
+                    atomicAdd(&d_counter[id_sequence].index[t], index);// Value of the combination
+                    atomicAdd(&d_counter[id_sequence].frequence[t], 1);// Value of the combination
+                    break;
+                } else if (d_counter[id_sequence].index[t] == index) {
+                    atomicAdd(&d_counter[id_sequence].frequence[t], 1);// Value of the combination
+                    break;
                 }
             }
             __syncthreads();
          }
-         
-         if (n_combination_counter >= *n_combination) printf("ERROR: Counter greater them combination");
-
       }
    }//End for id
 }

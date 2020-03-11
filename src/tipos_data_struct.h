@@ -33,8 +33,7 @@ struct chunk// Used to read sequences
 
 struct read 
 {
-   
-   
+   struct counter *counter;
 };
 
 struct counter {

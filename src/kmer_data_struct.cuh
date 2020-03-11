@@ -3,14 +3,9 @@
 
 #include "tipos_data_struct.h"
 
-void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device);
+void kmer_main(struct chunk *rd, lint nN, lint nS, int k, ushort device);
 
-__global__ void SetMatrix(int *Mat, ushort offset, int val, int nF);
+__global__ void ComputeFrequence(char *Seq, struct counter *d_counter, lint *d_start, int *d_length, const int k, lint nN, ushort offset, int n_sequence, int n_combination);
 
-__global__ void ComputeIndex(char *Seq, struct counter *, const int k, lint nN, ushort offset, int *n_combination);
-
-__global__ void ComputeFreq(int *Index, int *Freq, lint *start, int *length, ushort offset, int fourk, lint nS, lint nN);
-
-__global__ void ComputeFreqNew(int *Index, int *Freq, lint *start, int *length, ushort offset, int fourk, lint nS);
 
 #endif

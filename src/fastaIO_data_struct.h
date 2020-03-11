@@ -104,17 +104,16 @@ void ProcessData(struct seq *seq, struct chunk *chunk, lint n_concat_sequence_le
       pos++;
       chunk->length[seqCount] = seq[j].len;
       // Initializing Counters X Read
-      if (chunk->length[seqCount] - k +1 > chunk->n_combination)
+      if ((chunk->length[seqCount] - k +1) > *chunk->n_combination)
       {
-         chunk->n_combination = chunk->length[seqCount] - k +1
+         *chunk->n_combination = chunk->length[seqCount] - k +1;
       }
-      cudaMallocHost((void**)&chunk->reads[j].counter, sizeof(struct read)*rd->reads[j].n_combination);
-      for (w = 0; w < chunk->reads[j].n_combination; w++)
+      cudaMallocHost((void**)&chunk->counter[j].index, sizeof(int)**chunk->n_combination);
+      cudaMallocHost((void**)&chunk->counter[j].frequence, sizeof(int)**chunk->n_combination);
+      for (w = 0; w < *chunk->n_combination; w++)
       {
-         cudaMallocHost((void**)&chunk->reads[j].counter[d].index, sizeof(int));
-         chunk->reads[j].counter[w].index = -1;
-         cudaMallocHost((void**)&chunk->reads[j].counter[d].frequence, sizeof(int));
-         chunk->reads[j].counter[w].frequence = 0;
+         chunk->counter[j].index[w] = -1;
+         chunk->counter[j].frequence[w] = 0;
       }
       seqCount++;
       chunk->start[seqCount] = pos;
