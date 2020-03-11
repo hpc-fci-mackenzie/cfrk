@@ -35,6 +35,7 @@ void kmer_main(struct chunk *rd, lint n_concat_sequence_length, lint n_sequence,
    GetDeviceProp(device, &maxGridSize, &maxThreadDim, &deviceMemory);
 
 //---------------------------------------------------------------------------
+
    size[0] = n_concat_sequence_length * sizeof(char);// d_Seq and Seq size
    size[1] = n_sequence * sizeof(int);  // d_length
    size[2] = n_sequence * sizeof(lint); // d_start
@@ -47,6 +48,7 @@ void kmer_main(struct chunk *rd, lint n_concat_sequence_length, lint n_sequence,
       printf("\t\t\t[Error] Required memory: %ld; Available memory: %ld\n", totalsize, deviceMemory);
       exit(1);
    }
+
 //---------------------------------------------------------------------------
 
    if ( cudaMalloc ((void**)&d_Seq, size[0])    != cudaSuccess ) printf("\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
@@ -62,6 +64,7 @@ void kmer_main(struct chunk *rd, lint n_concat_sequence_length, lint n_sequence,
    }
   
 //************************************************
+
    // Thread mapping for raw data
    block[0] = maxThreadDim;
    grid[0] = floor(n_concat_sequence_length / block[0]) + 1;
@@ -114,7 +117,6 @@ void kmer_main(struct chunk *rd, lint n_concat_sequence_length, lint n_sequence,
 
    // SetMatrix<<<grid[0], block[0]>>>(d_counter, offset[0], n_concat_sequence_length);
    ComputeFrequence<<<grid[0], block[0]>>>(d_Seq, d_counter, d_start, d_length, k, n_concat_sequence_length, offset[0], n_sequence, *d_n_combination);
-
 
 //************************************************
 

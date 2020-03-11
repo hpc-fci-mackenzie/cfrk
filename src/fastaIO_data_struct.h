@@ -42,35 +42,35 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
           
    while ((size = getline(&line, &len, fastaFile)) != -1)
    {
-       if (line[0] == '>')
-       {
-          count++;
-          seq[count].header = (char*)malloc(sizeof(char)*len);
-          strcpy(seq[count].header, line);
-          flag = 0;
-       }
-       else
-       {
-          if (flag == 0)
-          {
-             seq[count].read = (char*)malloc(sizeof(char)*len);
-             strcat(seq[count].read, line);
-	     seq[count].len = strlen(seq[count].read) - 1;
-             flag = 1;
-          }
-          else
-          {
-             oldRead = strlen(seq[count].read);
-             aux = (char*)malloc(sizeof(char)*oldRead);
-             strcpy(aux, seq[count].read);
-             seq[count].read = NULL;
-             seq[count].read = (char*)malloc(sizeof(char)*(len+oldRead));
-             strcat(seq[count].read, aux);
-             strcat(seq[count].read, line);
-	     seq[count].len = strlen(seq[count].read) - 1; // len variable have no use since the code uses strlen function to get Length information
-             aux = NULL;
-          }
-       }
+      if (line[0] == '>')
+      {
+         count++;
+         seq[count].header = (char*)malloc(sizeof(char)*len);
+         strcpy(seq[count].header, line);
+         flag = 0;
+      }
+      else
+      {
+         if (flag == 0)
+         {
+            seq[count].read = (char*)malloc(sizeof(char)*len);
+            strcat(seq[count].read, line);
+	         seq[count].len = strlen(seq[count].read) - 1;
+            flag = 1;
+         }
+         else
+         {
+            oldRead = strlen(seq[count].read);
+            aux = (char*)malloc(sizeof(char)*oldRead);
+            strcpy(aux, seq[count].read);
+            seq[count].read = NULL;
+            seq[count].read = (char*)malloc(sizeof(char)*(len+oldRead));
+            strcat(seq[count].read, aux);
+            strcat(seq[count].read, line);
+	         seq[count].len = strlen(seq[count].read) - 1; // len variable have no use since the code uses strlen function to get Length information
+            aux = NULL;
+         }
+      }
    }
    return seq;
 }

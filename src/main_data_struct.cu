@@ -123,14 +123,14 @@ struct chunk* SelectChunkRemain(struct chunk *rd, ushort chunkSize, ushort id_ch
       }
       length += rd->length[id]+1;
    }
-    int size_of_index_vector = length - k + 1;
+   int size_of_index_vector = length - k + 1;
 
 
-    cudaMallocHost((void**)&chunk, sizeof(struct read));
+   cudaMallocHost((void**)&chunk, sizeof(struct read));
    cudaMallocHost((void**)&chunk->data, sizeof(char)*length);
    cudaMallocHost((void**)&chunk->length, sizeof(int)*chunkSize);
    cudaMallocHost((void**)&chunk->start, sizeof(lint)*chunkSize);
-    cudaMallocHost((void**)&chunk[id_chunk].counter, sizeof(struct counter)*size_of_index_vector);
+   cudaMallocHost((void**)&chunk[id_chunk].counter, sizeof(struct counter)*size_of_index_vector);
 
 
     // Copy rd->data to chunk->data
@@ -309,12 +309,12 @@ int main(int argc, char* argv[])
    {
       kmer_main(&chunk[nChunk-1], n_concat_sequence_length[nChunk-1], n_sequence[nChunk-1], k, device);
    }
-
+   /*
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
    lint rnS, rnN;
    struct chunk *chunk_remain = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN, nt, k);
    kmer_main(chunk_remain, rnN, rnS, k, device);
-
+   */
    // st = time(NULL);
    // PrintFreq(seq, chunk, nChunk, chunkSize);
    // et = time(NULL);
