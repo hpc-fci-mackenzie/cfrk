@@ -38,7 +38,7 @@ struct read
 
 struct counter {
     int *index;
-    int *frequence;
+    int *frequency;
 };
 
 #endif

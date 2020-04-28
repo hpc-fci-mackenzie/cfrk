@@ -30,7 +30,7 @@ void kmer_main(struct chunk *rd, lint n_concat_sequence_length, lint n_sequence,
    size_t size[5], totalsize;
    int sizeOfAllCounters = 0; //
    int i;
-
+   int n_combination = *(rd->n_combination);
    cudaSetDevice(device);
    GetDeviceProp(device, &maxGridSize, &maxThreadDim, &deviceMemory);
 
@@ -40,7 +40,8 @@ void kmer_main(struct chunk *rd, lint n_concat_sequence_length, lint n_sequence,
    size[1] = n_sequence * sizeof(int);  // d_length
    size[2] = n_sequence * sizeof(lint); // d_start
    size[3] = n_sequence * sizeof(struct counter); // d_reads
-   totalsize = size[0] + (size[1] * 2) + size[2] + size[3];
+   size[4] = n_combination * sizeof(int);
+   totalsize = size[0] + (size[1] * 2) + size[2] + size[3] + (size[3] * 2 * size[4]);
 
    if (totalsize > deviceMemory)
    {
@@ -51,20 +52,28 @@ void kmer_main(struct chunk *rd, lint n_concat_sequence_length, lint n_sequence,
 
 //---------------------------------------------------------------------------
 
-   if ( cudaMalloc ((void**)&d_Seq, size[0])    != cudaSuccess ) printf("\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMalloc ((void**)&d_length, size[1]) != cudaSuccess ) printf("\n[Error 2] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMalloc ((void**)&d_start, size[2])  != cudaSuccess ) printf("\n[Error 3] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMalloc ((void**)&d_n_combination, sizeof(int)) != cudaSuccess ) printf("\n[Error 4] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMalloc ((void**)&d_counter, size[3]) != cudaSuccess )  printf("\n[Error 5] %s\n", cudaGetErrorString(cudaGetLastError()));
+    fprintf(stderr, "Memory Allocation\n");
+   if ( cudaMalloc ((void**)&d_Seq, size[0])    != cudaSuccess )                                                        fprintf(stderr, "\n[Error 1] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMalloc ((void**)&d_length, size[1]) != cudaSuccess )                                                        fprintf(stderr, "\n[Error 2] %s\n", cudaGetErrorString(cudaGetLastError()));
+   if ( cudaMalloc ((void**)&d_start, size[2])  != cudaSuccess )                                                        fprintf(stderr, "\n[Error 3] %s\n", cudaGetErrorString(cudaGetLastError()));
+
+   struct counter *h_counter = (struct counter *) malloc(size[3]);
+   memcpy(h_counter, rd->counter, size[3]);
 
    for(i = 0; i < n_sequence; i++)
    {
-      if( cudaMalloc((void**)&d_counter[i].index, sizeof(int)**rd->n_combination) != cudaSuccess )      printf("\n[Error 6-%d] %s\n", i, cudaGetErrorString(cudaGetLastError()));
-      if( cudaMalloc((void**)&d_counter[i].frequence, sizeof(int)**rd->n_combination) != cudaSuccess )  printf("\n[Error 7-%d] %s\n", i, cudaGetErrorString(cudaGetLastError()));
-   }
-  
-//************************************************
+       if( cudaMalloc((void**)&(h_counter[i].index), size[5]) != cudaSuccess )                                          fprintf(stderr, "\n[Error 4-%d] %s\t", i, cudaGetErrorString(cudaGetLastError()));
+       cudaMemcpyAsync(h_counter[i].index, rd->counter[i].index, size[4], cudaMemcpyHostToDevice);
 
+       if( cudaMalloc((void**)&(h_counter[i].frequency), size[5]) != cudaSuccess )                                      fprintf(stderr, "[Error 5-%d] %s", i, cudaGetErrorString(cudaGetLastError()));
+       cudaMemcpyAsync(h_counter[i].frequency, rd->counter[i].frequency, size[4], cudaMemcpyHostToDevice);
+
+   }
+    if ( cudaMalloc ((void**)&d_counter, size[3]) != cudaSuccess )                                                      fprintf(stderr, "\n[Error 6] %s\n", cudaGetErrorString(cudaGetLastError()));
+    if ( cudaMemcpyAsync(d_counter, h_counter, size[3], cudaMemcpyHostToDevice) != cudaSuccess)                         fprintf(stderr, "\n[Error 7] %s\n", cudaGetErrorString(cudaGetLastError()));
+
+//************************************************
+    fprintf(stderr, "Memory Mapping\n");
    // Thread mapping for raw data
    block[0] = maxThreadDim;
    grid[0] = floor(n_concat_sequence_length / block[0]) + 1;
@@ -74,7 +83,7 @@ void kmer_main(struct chunk *rd, lint n_concat_sequence_length, lint n_sequence,
       offset[0] = (n_concat_sequence_length / (grid[0] * block[0])) + 1;
    }
 
-   // Thread mapping for 
+   // Thread mapping for
    block[1] = maxThreadDim;
    grid[1] = (n_sequence / block[1]) + 1;
    if (grid[1] > maxGridSize)
@@ -98,46 +107,34 @@ void kmer_main(struct chunk *rd, lint n_concat_sequence_length, lint n_sequence,
       grid[3] = maxGridSize;
       offset[3] = (sizeOfAllCounters / (grid[3] * block[3])) + 1;
    }
+//************************************************
+    fprintf(stderr, "Memory Copy\n");
+    if ( cudaMemcpyAsync(d_Seq, rd->data, size[0], cudaMemcpyHostToDevice) != cudaSuccess)                              fprintf(stderr, "[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
+    if ( cudaMemcpyAsync(d_length, rd->length, size[1], cudaMemcpyHostToDevice) != cudaSuccess)                         fprintf(stderr, "[Error 9] %s\n", cudaGetErrorString(cudaGetLastError()));
+    if ( cudaMemcpyAsync(d_start, rd->start, size[2], cudaMemcpyHostToDevice) != cudaSuccess)                           fprintf(stderr, "[Error 10] %s\n", cudaGetErrorString(cudaGetLastError()));
 
 //************************************************
-
-   if ( cudaMemcpyAsync(d_Seq, rd->data, size[0], cudaMemcpyHostToDevice) != cudaSuccess)      printf("[Error 8] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMemcpyAsync(d_length, rd->length, size[1], cudaMemcpyHostToDevice) != cudaSuccess) printf("[Error 9] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMemcpyAsync(d_start, rd->start, size[2], cudaMemcpyHostToDevice) != cudaSuccess)   printf("[Error 10] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMemcpyAsync(d_n_combination, rd->n_combination, sizeof(int), cudaMemcpyHostToDevice) != cudaSuccess)   printf("[Error 11] %s\n", cudaGetErrorString(cudaGetLastError()));
-   if ( cudaMemcpyAsync(d_counter, rd->counter, size[3], cudaMemcpyHostToDevice) != cudaSuccess)   printf("[Error 12] %s\n", cudaGetErrorString(cudaGetLastError()));
-
-   for(i = 0; i < n_sequence; i++)
-   {
-      if ( cudaMemcpyAsync(d_counter[i].index, rd->counter[i].index, sizeof(int)**rd->n_combination, cudaMemcpyHostToDevice) != cudaSuccess)           printf("\n[Error 13-%d] %s\n", i, cudaGetErrorString(cudaGetLastError()));
-      if ( cudaMemcpyAsync(d_counter[i].frequence, rd->counter[i].frequence, sizeof(int)**rd->n_combination, cudaMemcpyHostToDevice) != cudaSuccess)   printf("\n[Error 14-%d] %s\n", i, cudaGetErrorString(cudaGetLastError()));
-   }
-
-//************************************************
-
+    fprintf(stderr, "Kernel Execution\n");
    // SetMatrix<<<grid[0], block[0]>>>(d_counter, offset[0], n_concat_sequence_length);
-   ComputeFrequence<<<grid[0], block[0]>>>(d_Seq, d_counter, d_start, d_length, k, n_concat_sequence_length, offset[0], n_sequence, *d_n_combination);
+   ComputeFrequency<<<grid[0], block[0]>>>(d_Seq, d_counter, d_start, d_length, k, n_concat_sequence_length, offset[0], n_sequence, n_combination);
 
 //************************************************
-
-   for (i = 0; i < n_sequence; i++)
-   {
-      if ( cudaMemcpy(rd->counter[i].index, d_counter[i].index, sizeof(int)**rd->n_combination, cudaMemcpyHostToDevice) != cudaSuccess)           printf("\n[Error 15-%d] %s\n", i, cudaGetErrorString(cudaGetLastError()));
-      if ( cudaMemcpy(rd->counter[i].frequence, d_counter[i].frequence, sizeof(int)**rd->n_combination, cudaMemcpyHostToDevice) != cudaSuccess)   printf("\n[Error 16-%d] %s\n", i, cudaGetErrorString(cudaGetLastError()));
-   }
-
+    fprintf(stderr, "Memory Copy back\n");
+    if ( cudaMemcpy(h_counter, d_counter, size[3], cudaMemcpyDeviceToHost) != cudaSuccess)                              fprintf(stderr, "[Error 11] %s\n", cudaGetErrorString(cudaGetLastError()));
+    for(i = 0; i < n_sequence; i++)
+    {
+        if(cudaMemcpy(rd->counter[i].index, h_counter[i].index, size[4], cudaMemcpyDeviceToHost) != cudaSuccess)        fprintf(stderr, "\n[Error 12-%d] %s\t", i, cudaGetErrorString(cudaGetLastError()));
+        if(cudaMemcpy(rd->counter[i].frequency, h_counter[i].frequency, size[4],cudaMemcpyDeviceToHost) != cudaSuccess) fprintf(stderr, "[Error 13-%d] %s", i, cudaGetErrorString(cudaGetLastError()));
+    }
+    memcpy(rd->counter, h_counter, size[3]);
 //************************************************
-
+    fprintf(stderr, "\nFree Memory\n");
+    printf("\nTotalSize: %d, DeviceMemory: %d\n", totalsize, deviceMemory);
    cudaFree(d_Seq);
    cudaFree(d_counter);
    cudaFree(d_start);
    cudaFree(d_length);
-   for (i = 0; i < n_sequence; i++)
-   {
-         cudaFree(d_counter[i].index);
-         cudaFree(d_counter[i].frequence);
-   }
-   cudaFree(d_counter);
+   free(h_counter);
 
 //---------------------------------------------------------------------------
 

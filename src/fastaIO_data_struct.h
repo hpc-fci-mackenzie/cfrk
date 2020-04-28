@@ -109,11 +109,11 @@ void ProcessData(struct seq *seq, struct chunk *chunk, lint n_concat_sequence_le
          *chunk->n_combination = chunk->length[seqCount] - k +1;
       }
       cudaMallocHost((void**)&chunk->counter[j].index, sizeof(int)**chunk->n_combination);
-      cudaMallocHost((void**)&chunk->counter[j].frequence, sizeof(int)**chunk->n_combination);
+      cudaMallocHost((void**)&chunk->counter[j].frequency, sizeof(int)**chunk->n_combination);
       for (w = 0; w < *chunk->n_combination; w++)
       {
          chunk->counter[j].index[w] = -1;
-         chunk->counter[j].frequence[w] = 0;
+         chunk->counter[j].frequency[w] = 0;
       }
       seqCount++;
       chunk->start[seqCount] = pos;

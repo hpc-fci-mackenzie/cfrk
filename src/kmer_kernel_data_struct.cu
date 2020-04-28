@@ -5,12 +5,12 @@
 
 
 //Compute k-mer index
-__global__ void ComputeFrequence(char *Seq, struct counter *d_counter, lint *d_start, int *d_length, const int k, lint nN, ushort offset, int n_sequence, int n_combination)
+__global__ void ComputeFrequency(char *Seq, struct counter *d_counter, lint *d_start, int *d_length, const int k, lint nN, ushort offset, int n_sequence, int n_combination)
 {
-   lint idx =  blockIdx.x;
+   int idx =  blockIdx.x;
 
-   lint start = idx * offset;
-   lint end   = start + offset;
+   int start = idx * offset;
+   int end   = start + offset;
 
    for(lint id = start; id < end; id++)
    {
@@ -20,7 +20,8 @@ __global__ void ComputeFrequence(char *Seq, struct counter *d_counter, lint *d_s
       {
          lint id_sequence;
          lint p;
-         for (p = 0; p < n_sequence; p++){
+         for (p = 0; p < n_sequence; p++)
+         {
             if(d_start[p] < id && id < (d_start[p] + d_length[p]))
             {
                id_sequence = p;
@@ -39,16 +40,17 @@ __global__ void ComputeFrequence(char *Seq, struct counter *d_counter, lint *d_s
                break;
             }
          }//End for i
+
          if(index != -1)
          {
             __threadfence();
             for (int t = 0; t < n_combination; t++){
                 if (d_counter[id_sequence].index[t] == -1){
                     atomicAdd(&d_counter[id_sequence].index[t], index);// Value of the combination
-                    atomicAdd(&d_counter[id_sequence].frequence[t], 1);// Value of the combination
+                    atomicAdd(&d_counter[id_sequence].frequency[t], 1);// Value of the combination
                     break;
                 } else if (d_counter[id_sequence].index[t] == index) {
-                    atomicAdd(&d_counter[id_sequence].frequence[t], 1);// Value of the combination
+                    atomicAdd(&d_counter[id_sequence].frequency[t], 1);// Value of the combination
                     break;
                 }
             }
@@ -56,5 +58,6 @@ __global__ void ComputeFrequence(char *Seq, struct counter *d_counter, lint *d_s
          }
       }
    }//End for id
+
 }
 

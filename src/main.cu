@@ -298,11 +298,11 @@ int main(int argc, char* argv[])
    struct read *chunk_remain = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN, nt);
    kmer_main(chunk_remain, rnN, rnS, k, device);
 
-   // st = time(NULL);
-   // PrintFreq(seq, chunk, nChunk, chunkSize);
-   // et = time(NULL);
-   // PrintFreq(seq, chunk_remain, 1, rnS);
-   // printf("\n\t\tWriting time: %ld\n", (et-st));
+    st = time(NULL);
+    PrintFreq(seq, chunk, nChunk, chunkSize);
+    et = time(NULL);
+    PrintFreq(seq, chunk_remain, 1, rnS);
+    printf("\n\t\tWriting time: %ld\n", (et-st));
 
 return 0;
 }
