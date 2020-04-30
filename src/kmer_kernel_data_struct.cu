@@ -2,7 +2,23 @@
 #include <cuda.h>
 #include "tipos_data_struct.h"
 
+//Set Matrix values
+__global__ void SetMatrix(struct counter *Mat, ushort offset, int nF, int id_sequence)
+{
+    lint idx = threadIdx.x + (blockDim.x * blockIdx.x);
 
+    lint start = idx * offset;
+    lint end   = start + offset;
+
+    for(lint id = start; id < end; id++)
+    {
+        if (id < nF)
+        {
+            Mat[id_sequence].index[idx] = -1;
+            Mat[id_sequence].frequency[idx] = 0;
+        }
+    }
+}
 
 //Compute k-mer index
 __global__ void ComputeFrequency(char *Seq, struct counter *d_counter, lint *d_start, int *d_length, const int k, lint nN, ushort offset, int n_sequence, int n_combination)

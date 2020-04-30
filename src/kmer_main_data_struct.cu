@@ -62,10 +62,10 @@ void kmer_main(struct chunk *rd, lint n_concat_sequence_length, lint n_sequence,
 
    for(i = 0; i < n_sequence; i++)
    {
-       if( cudaMalloc((void**)&(h_counter[i].index), size[5]) != cudaSuccess )                                          fprintf(stderr, "\n[Error 4-%d] %s\t", i, cudaGetErrorString(cudaGetLastError()));
+       if( cudaMalloc((void**)&(h_counter[i].index), size[4]) != cudaSuccess )                                          fprintf(stderr, "\n[Error 4-%d] %s\t", i, cudaGetErrorString(cudaGetLastError()));
        cudaMemcpyAsync(h_counter[i].index, rd->counter[i].index, size[4], cudaMemcpyHostToDevice);
 
-       if( cudaMalloc((void**)&(h_counter[i].frequency), size[5]) != cudaSuccess )                                      fprintf(stderr, "[Error 5-%d] %s", i, cudaGetErrorString(cudaGetLastError()));
+       if( cudaMalloc((void**)&(h_counter[i].frequency), size[4]) != cudaSuccess )                                      fprintf(stderr, "[Error 5-%d] %s", i, cudaGetErrorString(cudaGetLastError()));
        cudaMemcpyAsync(h_counter[i].frequency, rd->counter[i].frequency, size[4], cudaMemcpyHostToDevice);
 
    }
@@ -114,8 +114,12 @@ void kmer_main(struct chunk *rd, lint n_concat_sequence_length, lint n_sequence,
     if ( cudaMemcpyAsync(d_start, rd->start, size[2], cudaMemcpyHostToDevice) != cudaSuccess)                           fprintf(stderr, "[Error 10] %s\n", cudaGetErrorString(cudaGetLastError()));
 
 //************************************************
-    fprintf(stderr, "Kernel Execution\n");
-   // SetMatrix<<<grid[0], block[0]>>>(d_counter, offset[0], n_concat_sequence_length);
+    fprintf(stderr, "Kernel Execution Matrix\n");
+    for(i = 0; i < n_sequence; i++)
+    {
+        SetMatrix<<<grid[1], block[1]>>>(d_counter, offset[1], n_combination, i);
+    }
+    fprintf(stderr, "Kernel Execution Compute\n");
    ComputeFrequency<<<grid[0], block[0]>>>(d_Seq, d_counter, d_start, d_length, k, n_concat_sequence_length, offset[0], n_sequence, n_combination);
 
 //************************************************
@@ -129,7 +133,6 @@ void kmer_main(struct chunk *rd, lint n_concat_sequence_length, lint n_sequence,
     memcpy(rd->counter, h_counter, size[3]);
 //************************************************
     fprintf(stderr, "\nFree Memory\n");
-    printf("\nTotalSize: %d, DeviceMemory: %d\n", totalsize, deviceMemory);
    cudaFree(d_Seq);
    cudaFree(d_counter);
    cudaFree(d_start);

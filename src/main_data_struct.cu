@@ -236,8 +236,24 @@ void *LaunchKmer(void* threadId)
    int i = 0;
    for (i = start; i < end; i++)
    {
+//       for (lint t = 0; t < *n_sequence; t ++)
+//       {
+//           for (int q = 0; q < *(chunk[i].n_combination); q++)
+//           {
+//               printf("Index: %d Frequency: %d\n", chunk[i].counter[t].index[q], chunk[i].counter[t].frequency[q]);
+//           }
+//       }
+
+
       kmer_main(&chunk[i], n_concat_sequence_length[i], n_sequence[i], k, device);
       cudaStreamSynchronize(0);
+       for (lint t = 0; t < n_sequence[i]; t++)
+       {
+           for (int q = 0; q < *(chunk[i].n_combination); q++)
+           {
+               printf("Index: %d Frequency: %d\n", chunk[i].counter[t].index[q], chunk[i].counter[t].frequency[q]);
+           }
+       }
       cudaFreeHost(chunk[i].data);
       cudaFreeHost(chunk[i].length);
       cudaFreeHost(chunk[i].start);
