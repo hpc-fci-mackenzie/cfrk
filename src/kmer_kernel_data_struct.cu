@@ -59,18 +59,18 @@ __global__ void ComputeFrequency(char *Seq, struct counter *d_counter, lint *d_s
 
          if(index != -1)
          {
-            __threadfence();
+//            __threadfence();
             for (int t = 0; t < n_combination; t++){
                 if (d_counter[id_sequence].index[t] == -1){
-                    atomicAdd(&d_counter[id_sequence].index[t], index);// Value of the combination
-                    atomicAdd(&d_counter[id_sequence].frequency[t], 1);// Value of the combination
+                    atomicAdd(&(d_counter[id_sequence].index[t]), index);// Value of the combination
+                    atomicAdd(&(d_counter[id_sequence].frequency[t]), 1);// Value of the combination
                     break;
                 } else if (d_counter[id_sequence].index[t] == index) {
-                    atomicAdd(&d_counter[id_sequence].frequency[t], 1);// Value of the combination
+                    atomicAdd(&(d_counter[id_sequence].frequency[t]), 1);// Value of the combination
                     break;
                 }
             }
-            __syncthreads();
+//            __syncthreads();
          }
       }
    }//End for id

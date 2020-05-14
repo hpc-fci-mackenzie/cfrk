@@ -80,21 +80,30 @@ void ProcessData(struct seq *seq, struct chunk *chunk, lint n_concat_sequence_le
 {
    lint i, j, pos = 0, seqCount = 0, w;
 
-   cudaMallocHost((void**)&chunk->data, sizeof(char)*(n_concat_sequence_length + n_sequence));
-   cudaMallocHost((void**)&chunk->length, sizeof(int)*n_sequence);
-   cudaMallocHost((void**)&chunk->start, sizeof(lint)*n_sequence);
-   cudaMallocHost((void**)&chunk->n_combination, sizeof(int));
-   cudaMallocHost((void**)&chunk->counter, sizeof(struct counter)*n_sequence);
+//   cudaMallocHost((void**)&chunk->data, sizeof(char)*(n_concat_sequence_length + n_sequence));
+//   cudaMallocHost((void**)&chunk->length, sizeof(int)*n_sequence);
+//   cudaMallocHost((void**)&chunk->start, sizeof(lint)*n_sequence);
+//   cudaMallocHost((void**)&chunk->n_combination, sizeof(int));
+//   cudaMallocHost((void**)&chunk->counter, sizeof(struct counter)*n_sequence);
+    fprintf(stderr, "Malloc\n");
 
+    chunk->data = (char *) malloc(sizeof(char)*(n_concat_sequence_length + n_sequence));
+    chunk->length = (int *) malloc(sizeof(int)*n_sequence);
+    chunk->start = (lint *) malloc(sizeof(lint)*n_sequence);
+    chunk->n_combination = (int *) malloc(sizeof(int));
+    chunk->counter = (struct counter *) malloc(sizeof(struct counter)*n_sequence);
+    *chunk->n_combination = 0;
    //rd->data = (char*)malloc(sizeof(char)*(n_concat_sequence_length + n_sequence));
    //rd->length = (int*)malloc(sizeof(int)*n_sequence);
    //rd->start = (lint*)malloc(sizeof(lint)*n_sequence);
 
 
    chunk->start[0] = 0;
+    fprintf(stderr, "Iteration Begins\n");
 
-   for (j = 0; j < n_sequence; j++)
+    for (j = 0; j < n_sequence; j++)
    {
+//       fprintf(stderr, "Sequence %d: \n", j);
       for(i = 0; i < seq[j].len; i++)
       {
          chunk->data[pos] = seq[j].data[i];
@@ -108,13 +117,17 @@ void ProcessData(struct seq *seq, struct chunk *chunk, lint n_concat_sequence_le
       {
          *chunk->n_combination = chunk->length[seqCount] - k +1;
       }
-      cudaMallocHost((void**)&chunk->counter[j].index, sizeof(int)**chunk->n_combination);
-      cudaMallocHost((void**)&chunk->counter[j].frequency, sizeof(int)**chunk->n_combination);
-      for (w = 0; w < *chunk->n_combination; w++)
-      {
-         chunk->counter[j].index[w] = -1;
-         chunk->counter[j].frequency[w] = 0;
-      }
+//      cudaMallocHost((void**)&chunk->counter[j].index, sizeof(int)**chunk->n_combination);
+//      cudaMallocHost((void**)&chunk->counter[j].frequency, sizeof(int)**chunk->n_combination);
+
+//       chunk->counter[j].index = (int *) malloc(sizeof(int)**chunk->n_combination);
+//       chunk->counter[j].frequency = (int *) malloc(sizeof(int)**chunk->n_combination);
+//
+//      for (w = 0; w < *chunk->n_combination; w++)
+//       {
+//           chunk->counter[j].index[w] = -1;
+//           chunk->counter[j].frequency[w] = 0;
+//       }
       seqCount++;
       chunk->start[seqCount] = pos;
    }
@@ -123,12 +136,15 @@ void ProcessData(struct seq *seq, struct chunk *chunk, lint n_concat_sequence_le
 //-------------------------------------------------------------------------
 struct seq *ReadFASTASequences(char *file, lint *n_concat_sequence_length, lint *n_sequence, struct chunk *chunk, ushort flag, int k)
 {
-   struct seq *seq;
+    fprintf(stderr, "Variable Declaration\n");
+    struct seq *seq;
    int len;
    lint n_concat_sequence_length_partial = 0; // total length of all sequence concatenated
    int i, j;
+    fprintf(stderr, "Read Fasta\n");
 
-   seq = ReadFasta(file, n_sequence);
+    seq = ReadFasta(file, n_sequence);
+    fprintf(stderr, "Iteration Begins\n");
 
    for (i = 0; i < *n_sequence; i++)
    {
@@ -158,11 +174,11 @@ struct seq *ReadFASTASequences(char *file, lint *n_concat_sequence_length, lint 
          }
       }
    }
-
+    fprintf(stderr, "Process Data\n");
    ProcessData(seq, chunk, n_concat_sequence_length_partial, *n_sequence, flag, k);
 
    *n_concat_sequence_length = n_concat_sequence_length_partial + *n_sequence;
-
+    fprintf(stderr, "Finishing Up\n");
    return seq;
 }
 

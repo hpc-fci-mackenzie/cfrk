@@ -127,7 +127,7 @@ struct chunk* SelectChunkRemain(struct chunk *rd, ushort chunkSize, ushort id_ch
    int size_of_index_vector = length - k + 1;
 
 
-   cudaMallocHost((void**)&chunk, sizeof(struct read));
+   cudaMallocHost((void**)&chunk, sizeof(struct chunk));
    cudaMallocHost((void**)&chunk->data, sizeof(char)*length);
    cudaMallocHost((void**)&chunk->length, sizeof(int)*chunkSize);
    cudaMallocHost((void**)&chunk->start, sizeof(lint)*chunkSize);
@@ -179,13 +179,19 @@ void SelectChunk(struct chunk *chunk, const int nChunk, struct chunk *rd, ushort
          }
          length += rd->length[id]+1;
       }
-      // int size_of_index_vector = length - k + 1; // c = L - k + 1 296/1024
+//       int size_of_index_vector = length - k + 1; // c = L - k + 1 296/1024
 
-      cudaMallocHost((void**)&chunk[id_chunk].data, sizeof(char)*length);
-      cudaMallocHost((void**)&chunk[id_chunk].length, sizeof(int)*chunkSize);
-      cudaMallocHost((void**)&chunk[id_chunk].start, sizeof(lint)*chunkSize);
-      cudaMallocHost((void**)&chunk[id_chunk].n_combination, sizeof(int));
-      cudaMallocHost((void**)&chunk[id_chunk].counter, sizeof(struct counter)*chunkSize);
+//      cudaMallocHost((void**)&chunk[id_chunk].data, sizeof(char)*length);
+//      cudaMallocHost((void**)&chunk[id_chunk].length, sizeof(int)*chunkSize);
+//      cudaMallocHost((void**)&chunk[id_chunk].start, sizeof(lint)*chunkSize);
+//      cudaMallocHost((void**)&chunk[id_chunk].n_combination, sizeof(int));
+//      cudaMallocHost((void**)&chunk[id_chunk].counter, sizeof(struct counter)*chunkSize);
+
+       chunk[id_chunk].data = (char *) malloc(sizeof(char)*length);
+       chunk[id_chunk].length = (int *) malloc(sizeof(int)*chunkSize);
+       chunk[id_chunk].start = (lint *) malloc(sizeof(lint)*chunkSize);
+       chunk[id_chunk].n_combination = (int *) malloc(sizeof(int));
+       chunk[id_chunk].counter = (struct counter *) malloc(sizeof(struct counter)*chunkSize);
 
       // Copy rd->data to chunk->data
       lint start = rd->start[chunkSize*id_chunk];
@@ -198,16 +204,20 @@ void SelectChunk(struct chunk *chunk, const int nChunk, struct chunk *rd, ushort
 
       chunk[id_chunk].length[0] = rd->length[chunkSize*id_chunk];
       chunk[id_chunk].start[0] = 0;
-      *chunk[id_chunk].n_combination = *rd->n_combination;
-      for (int k = 0; k < chunkSize; k++)
+      *(chunk[id_chunk].n_combination) = *(rd->n_combination);
+      for (lint k = 0; k < max; k++)
       {
-         cudaMallocHost((void**)&chunk[id_chunk].counter[k].index, sizeof(int)**chunk[id_chunk].n_combination);
-         cudaMallocHost((void**)&chunk[id_chunk].counter[k].frequency, sizeof(int)**chunk[id_chunk].n_combination);
-         for(int d = 0; d < *chunk[id_chunk].n_combination; d++)
-         {
-            chunk[id_chunk].counter[k].index[d] = -1;
-            chunk[id_chunk].counter[k].frequency[d] = 0;
-         }
+//         cudaMallocHost((void**)&chunk[id_chunk].counter[k].index, sizeof(int)**chunk[id_chunk].n_combination);
+//         cudaMallocHost((void**)&chunk[id_chunk].counter[k].frequency, sizeof(int)**chunk[id_chunk].n_combination);
+
+          chunk[id_chunk].counter[k].index = (int *) malloc(sizeof(int)**chunk[id_chunk].n_combination);
+          chunk[id_chunk].counter[k].frequency = (int *) malloc(sizeof(int)**chunk[id_chunk].n_combination);
+
+//         for(int d = 0; d < *chunk[id_chunk].n_combination; d++)
+//         {
+//            chunk[id_chunk].counter[k].index[d] = -1;
+//            chunk[id_chunk].counter[k].frequency[d] = 0;
+//         }
       }
       // Copy start and length
       for (i = 1; i < max; i++)
@@ -236,29 +246,13 @@ void *LaunchKmer(void* threadId)
    int i = 0;
    for (i = start; i < end; i++)
    {
-//       for (lint t = 0; t < *n_sequence; t ++)
-//       {
-//           for (int q = 0; q < *(chunk[i].n_combination); q++)
-//           {
-//               printf("Index: %d Frequency: %d\n", chunk[i].counter[t].index[q], chunk[i].counter[t].frequency[q]);
-//           }
-//       }
-
-
       kmer_main(&chunk[i], n_concat_sequence_length[i], n_sequence[i], k, device);
       cudaStreamSynchronize(0);
-       for (lint t = 0; t < n_sequence[i]; t++)
-       {
-           for (int q = 0; q < *(chunk[i].n_combination); q++)
-           {
-               printf("Index: %d Frequency: %d\n", chunk[i].counter[t].index[q], chunk[i].counter[t].frequency[q]);
-           }
-       }
-      cudaFreeHost(chunk[i].data);
-      cudaFreeHost(chunk[i].length);
-      cudaFreeHost(chunk[i].start);
-      cudaFreeHost(chunk[i].n_combination);
-      cudaFreeHost(chunk[i].counter);
+//      cudaFreeHost(chunk[i].data);
+//      cudaFreeHost(chunk[i].length);
+//      cudaFreeHost(chunk[i].start);
+//      cudaFreeHost(chunk[i].n_combination);
+//      cudaFreeHost(chunk[i].counter);
    }
 
 return NULL;
@@ -294,8 +288,8 @@ int main(int argc, char* argv[])
    lint st = time(NULL);
    puts("\n\n\t\tReading seqs!!!");
    struct chunk *rd;
-   cudaMallocHost((void**)&rd, sizeof(struct chunk));
-   // rd = (struct read*)malloc(sizeof(struct read));
+//   cudaMallocHost((void**)&rd, sizeof(struct chunk));
+    rd = (struct chunk*) malloc(sizeof(struct chunk));
    struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1, k);
    printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
    lint et = time(NULL);
@@ -322,12 +316,23 @@ int main(int argc, char* argv[])
    {
       pthread_join(threads[i], NULL);
    }
-
-   int threadRemain = nChunk - (offset*devCount);
-   if (threadRemain > 0)
+   for (int k = 0; k < nChunk; k++)
    {
-      kmer_main(&chunk[nChunk-1], n_concat_sequence_length[nChunk-1], n_sequence[nChunk-1], k, device);
+       for (lint t = 0; t < chunkSize; t ++)
+       {
+           for (int q = 0; q < *(chunk[k].n_combination); q++)
+           {
+//               if ( chunk[k].counter[t].index[q] != -1)
+                   printf("Index: %d Frequency: %d\n", chunk[k].counter[t].index[q], chunk[k].counter[t].frequency[q]);
+           }
+       }
    }
+
+//   int threadRemain = nChunk - (offset*devCount);
+//   if (threadRemain > 0)
+//   {
+//      kmer_main(&chunk[nChunk-1], n_concat_sequence_length[nChunk-1], n_sequence[nChunk-1], k, device);
+//   }
    /*
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
    lint rnS, rnN;
