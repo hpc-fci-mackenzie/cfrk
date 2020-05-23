@@ -322,7 +322,7 @@ int main(int argc, char* argv[])
        {
            for (int q = 0; q < *(chunk[k].n_combination); q++)
            {
-//               if ( chunk[k].counter[t].index[q] != -1)
+               if ( chunk[k].counter[t].frequency[q] != 0)
                    printf("Index: %d Frequency: %d\n", chunk[k].counter[t].index[q], chunk[k].counter[t].frequency[q]);
            }
        }
