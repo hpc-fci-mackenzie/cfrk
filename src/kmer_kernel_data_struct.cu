@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <cuda.h>
+//#include <string.h>
 #include "tipos_data_struct.h"
+
+//__device__ struct counter *sd_counter;
 
 //Set Matrix values
 __global__ void SetMatrix(struct counter *Mat, ushort offset, int nF, int id_sequence) {
@@ -20,6 +23,51 @@ __global__ void SetMatrix(struct counter *Mat, ushort offset, int nF, int id_seq
 //Compute k-mer index
 __global__ void ComputeFrequency(char *Seq, struct counter *d_counter, lint *d_start, int *d_length, const int k, lint nN, ushort offset, lint n_sequence, int n_combination)
 {
+
+    int idx = threadIdx.x + (blockDim.x * blockIdx.x);
+
+    if (idx < n_sequence)
+    {
+        int end = d_start[idx] + (d_length[idx] + 1);
+
+        for (int i = d_start[idx]; i < end; i++)
+        {
+            int index = 0;
+            for ( lint j = 0; j < k ; j++ )
+            {
+                if ( Seq[i + j] != -1 )
+                {
+                    index += Seq[i + j] * exp10f(j);
+                    break;
+                }
+                else
+                {
+                    index = -1;
+                    break;
+                }
+            }
+            __threadfence();
+            for (int t = 0; t < n_combination && index > -1; t++)
+            {
+                if (d_counter[idx].index[t] == -1)
+                {
+                    atomicAdd(&(d_counter[idx].index[t]), index + 1);// Index
+                    atomicAdd(&(d_counter[idx].frequency[t]), 1);// Value of the combination
+//                    d_counter[id_sequence].index[t] = index + 1;
+//                    d_counter[id_sequence].frequency[t]++;
+                    break;
+                }
+                else if (d_counter[idx].index[t] == index)
+                {
+                    atomicAdd(&(d_counter[idx].frequency[t]), 1);// Value of the combination
+//                    d_counter[id_sequence].frequency[t]++;
+                    break;
+                }
+            }
+            __syncthreads();
+        }
+    }
+    /*
    lint idx =  threadIdx.x + (blockDim.x * blockIdx.x);
 
    lint start = idx * offset;
@@ -77,6 +125,7 @@ __global__ void ComputeFrequency(char *Seq, struct counter *d_counter, lint *d_s
          }
       }
    }//End for id
+     */
 
 }
 

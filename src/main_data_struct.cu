@@ -74,6 +74,7 @@ void DeviceInfo(uint8_t device)
    printf("\tTotal global memory: %ld\n", prop.totalGlobalMem);
    printf("\tMax grid size: %d, %d, %d\n", prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
    printf("\tMax thread dim: %d, %d, %d\n", prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
+   printf("\tMax threads per Block: %d\n", prop.maxThreadsPerBlock);
    printf("\tWarp size: %d\n", prop.warpSize);
    printf("\tMax threads per multiprocessor: %d\n", prop.maxThreadsPerMultiProcessor);
 
@@ -205,13 +206,17 @@ void SelectChunk(struct chunk *chunk, const int nChunk, struct chunk *rd, ushort
       chunk[id_chunk].length[0] = rd->length[chunkSize*id_chunk];
       chunk[id_chunk].start[0] = 0;
       *(chunk[id_chunk].n_combination) = *(rd->n_combination);
-      for (lint k = 0; k < max; k++)
+      for (lint w = 0; w < *n_sequence; w++)
       {
 //         cudaMallocHost((void**)&chunk[id_chunk].counter[k].index, sizeof(int)**chunk[id_chunk].n_combination);
 //         cudaMallocHost((void**)&chunk[id_chunk].counter[k].frequency, sizeof(int)**chunk[id_chunk].n_combination);
 
-          chunk[id_chunk].counter[k].index = (int *) malloc(sizeof(int)**chunk[id_chunk].n_combination);
-          chunk[id_chunk].counter[k].frequency = (int *) malloc(sizeof(int)**chunk[id_chunk].n_combination);
+          chunk[id_chunk].counter[w].index = (int *) malloc(sizeof(int)**chunk[id_chunk].n_combination);
+//          for (int j = 0; j < *chunk[id_chunk].n_combination; j++)
+//          {
+//              chunk[id_chunk].counter[w].index[j] = (int *) malloc(sizeof(int)*k);
+//          }
+          chunk[id_chunk].counter[w].frequency = (int *) malloc(sizeof(int)**chunk[id_chunk].n_combination);
 
 //         for(int d = 0; d < *chunk[id_chunk].n_combination; d++)
 //         {
@@ -316,17 +321,17 @@ int main(int argc, char* argv[])
    {
       pthread_join(threads[i], NULL);
    }
-   for (int k = 0; k < nChunk; k++)
-   {
-       for (lint t = 0; t < chunkSize; t ++)
-       {
-           for (int q = 0; q < *(chunk[k].n_combination); q++)
-           {
-               if ( chunk[k].counter[t].frequency[q] != 0)
-                   printf("Index: %d Frequency: %d\n", chunk[k].counter[t].index[q], chunk[k].counter[t].frequency[q]);
-           }
-       }
-   }
+//   for (int k = 0; k < nChunk; k++)
+//   {
+//       for (lint t = 0; t < chunkSize; t ++)
+//       {
+//           for (int q = 0; q < *(chunk[k].n_combination); q++)
+//           {
+//               if ( chunk[k].counter[t].frequency[q] != 0)
+//                   printf("Index: %d Frequency: %d\n", chunk[k].counter[t].index[q], chunk[k].counter[t].frequency[q]);
+//           }
+//       }
+//   }
 
 //   int threadRemain = nChunk - (offset*devCount);
 //   if (threadRemain > 0)
