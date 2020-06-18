@@ -14,9 +14,9 @@
 #include <math.h>
 #include <pthread.h>
 // #include <omp.h>
-#include "tipos.h"
-#include "fastaIO.h"
-#include "kmer.cuh"
+#include "tipos_cpu.h"
+#include "fastaIO_cpu.h"
+#include "kmer_cpu.h"
 
 #define FILENAME_LENGTH 512
 
@@ -28,39 +28,50 @@ int device;
 int k;
 char file_out[FILENAME_LENGTH];
 
-void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
+void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
 {
    FILE *out;
    int cont = 0;
    int cont_seq = 0;
-   char str[32];
-   lint fourk = pow(4, k);
+    char *str = (char *) calloc(32, sizeof(char));
+    lint fourk = pow(4, k);
 
    out = fopen(file_out, "w");
-
-   for (int j = 0; j < nChunk; j++)
+    char *index = (char *) malloc(sizeof(char)*k);
+    int start = 0;
+    int end = offset;
+   fprintf(out, "CHUNK,SEQUENCE,INDEX,FREQUENCY\n");
+//   fwrite(str, sizeof(char), sizeof(str), out);
+   for (int j = start; j < end; j++)
    {
-      cont = 0;
-      cont_seq = 0;
-      for (int i = 0; i < (chunkSize*fourk); i++)
+//       printf("J: %d \t", j);
+      for (lint i = 0; i < (chunkSize); i++)
       {
-         if (i % fourk == 0)
-         {
-            cont = 0;
-            sprintf(str, "\n");
-            // printf("%s", str);
-            fwrite(str, sizeof(char), sizeof(str), out);
-            // printf("%s", seq[cont_seq].header);
-            cont_seq++;
-         }
-         if (pchunk[j].Freq[i] != 0)
-         {
-            sprintf(str, "%d ", pchunk[j].Freq[i]);
-            printf("\tFreq[%d]: %s\n", i, str);
-            fwrite(str, sizeof(char), sizeof(str), out);
-         }
-         cont++;
+//            printf("I: %d\t", i);
+//          sprintf(str, "<Sequence %d>\n", i);
+//          fwrite(str, sizeof(char), sizeof(str), out);
+          for (int w = 0; w < (pchunk[j].length[i] - k + 1); w++)
+          {
+              if (pchunk[j].counter[i].frequency[w] != 0)
+              {
+//                printf("W: %d\t", i);
+                  for (int c = 0; c < k; c++)
+                  {
+                      index[c] = pchunk[j].counter[i].index[w][c] + 48;
+                  }
+//                  sprintf(out, "%d,%ld,%s,%d\n", j, i, index, pchunk[j].counter[i].frequency[w]);
+//                  fwrite(str, sizeof(char), sizeof(str), out);
+                  fprintf(out, "%d,%d,%s,%d\n", j, i, index, pchunk[j].counter[i].frequency[w]);
+//                  fwrite(str, sizeof(char), sizeof(str), out);
+              }
+          }
+//          sprintf(str, "</Sequence %d>\n", i);
+//          fwrite(str, sizeof(char), sizeof(str), out);
       }
+//       printf("\n");
+
+//       sprintf(str, "</Chunk %d>\n", j);
+//       fwrite(str, sizeof(char), sizeof(str), out);
    }
    fclose(out);
 }
@@ -86,7 +97,7 @@ struct read* SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lin
    printf("@deb | SelectChunkRemain | length: %ld\n", length);
 
    chunk = (struct read *)malloc(sizeof(struct read));
-   chunk->data = (char*)malloc(sizeof(char) * length);
+   chunk->data = (int*)malloc(sizeof(int) * length);
    chunk->length = (int*)malloc(sizeof(int) * chunkSize);
    chunk->start = (lint*)malloc(sizeof(lint) * chunkSize);
 
@@ -144,7 +155,7 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
       // cudaMallocHost((void**)&chunk[it].data, sizeof(char)*length);
       // cudaMallocHost((void**)&chunk[it].length, sizeof(int)*chunkSize);
       // cudaMallocHost((void**)&chunk[it].start, sizeof(lint)*chunkSize);
-      chunk[it].data = (char*)calloc(length, sizeof(char));
+      chunk[it].data = (int*)calloc(length, sizeof(int));
       chunk[it].length = (int*)calloc(chunkSize, sizeof(int));
       chunk[it].start = (lint*)calloc(chunkSize, sizeof(lint));
 
@@ -193,9 +204,9 @@ void *LaunchKmer(void* threadId)
       printf("\tkmer_main - chunk(%d)\n", i);
       kmer_main(&chunk[i], nN[i], nS[i], k, device);
       // Waits for stream tasks to complete.
-      free(chunk[i].data);
-      free(chunk[i].length);
-      free(chunk[i].start);
+//      free(chunk[i].data);
+//      free(chunk[i].length);
+//      free(chunk[i].start);
    }
 
    return NULL;
@@ -203,7 +214,7 @@ void *LaunchKmer(void* threadId)
 
 int main(int argc, char* argv[])
 {
-   lint gnN = 0, gnS = 0, chunkSize = 8192;
+   lint gnN, gnS, chunkSize = 8192;
    int devCount = 1;
    int nt = 12;
    char dataset[FILENAME_LENGTH] = {0};
@@ -237,16 +248,16 @@ int main(int argc, char* argv[])
          nt = atoi(argv[4]);
       }
 
-      if(argv[5]) {
-         chunkSize = atoi(argv[5]);
-      }
+//      if(argv[5]) {
+//         chunkSize = atoi(argv[5]);
+//      }
    } else {
       strcpy(dataset, "teste.fasta");
       strcpy(file_out, "resultado.cfrk");
       k = 2;
    }
 
-   printf("Usage:\n> dataset: %s\n> file_out: %s\n> k: %d\n> chunkSize: %ld\n> nt: %d\n", dataset, file_out, k, chunkSize, nt);
+   printf("Usage:\n> dataset: %s\n> file_out: %s\n> k: %d\n> chunkSize: %d\n> nt: %d\n", dataset, file_out, k, (int) chunkSize, nt);
 
    /*
       (!) LEITURA DE SEQUÊNCIAS (FASTA)
@@ -266,7 +277,7 @@ int main(int argc, char* argv[])
       (!) DIVIDINDO OS DADOS EM CHUNKS
    */
    int nChunk = floor(gnS / chunkSize);
-   printf("> nChunk: %d\n", nChunk);
+   printf("> nChunk: %d\n", &nChunk);
    int i = 0;
    
    chunk = (struct read *)calloc(nChunk, sizeof(struct read));
@@ -313,10 +324,23 @@ int main(int argc, char* argv[])
    PrintFreq(seq, chunk, nChunk, chunkSize);
    et = time(NULL);
 
-   if(chunkRemain) {
-      PrintFreq(seq, chunk_remain, 1, rnS);
-   }
-   
+//   if(chunkRemain) {
+//      PrintFreq(seq, chunk_remain, 1, rnS);
+//   }
+//    for (int w = 0; w < nChunk; w++)
+//    {
+//        for (int i = 0; i < nS; i++)
+//        {
+//            int n_combination = chunk[w].length[i] - k + 1;
+//
+//            for (int j = 0; j < n_combination; j++)
+//            {
+//                if (chunk[w].counter[i].frequency[j] > 0)
+//                    printf("Chunk: %d Index: %s Frequency: %d\n", w, chunk[w].counter[i].index[j], chunk[w].counter[i].frequency[j]);
+//            }
+//        }
+//    }
+    free(chunk);
    printf("> Writing time: %ld\n", (et-st));
    return 0;
 }

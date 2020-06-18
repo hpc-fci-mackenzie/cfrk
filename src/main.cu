@@ -279,12 +279,8 @@ int main(int argc, char* argv[])
 
    for (i = 0; i < devCount; i++)
    {
-<<<<<<< HEAD
-      pthread_create(&threads[i], NULL, LaunchKmer, (void*)i);
-=======
 
-      pthread_create(&threads[i], NULL, LaunchKmer, (void*) i);
->>>>>>> parent of 2da2aba... ~ Stream implementation
+      pthread_create(&threads[i], NULL, LaunchKmer, (void*)i);
    }
 
    for (i = 0; i < devCount; i++)
