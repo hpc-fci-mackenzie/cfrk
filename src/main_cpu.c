@@ -28,7 +28,7 @@ int device;
 int k;
 char file_out[FILENAME_LENGTH];
 
-void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
+void PrintFreqCSV(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
 {
    FILE *out;
    int cont = 0;
@@ -41,39 +41,64 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
     int start = 0;
     int end = offset;
    fprintf(out, "CHUNK,SEQUENCE,INDEX,FREQUENCY\n");
-//   fwrite(str, sizeof(char), sizeof(str), out);
    for (int j = start; j < end; j++)
    {
-//       printf("J: %d \t", j);
       for (lint i = 0; i < (chunkSize); i++)
       {
-//            printf("I: %d\t", i);
-//          sprintf(str, "<Sequence %d>\n", i);
-//          fwrite(str, sizeof(char), sizeof(str), out);
           for (int w = 0; w < (pchunk[j].length[i] - k + 1); w++)
           {
               if (pchunk[j].counter[i].frequency[w] != 0)
               {
-//                printf("W: %d\t", i);
                   for (int c = 0; c < k; c++)
                   {
                       index[c] = pchunk[j].counter[i].index[w][c] + 48;
                   }
-//                  sprintf(out, "%d,%ld,%s,%d\n", j, i, index, pchunk[j].counter[i].frequency[w]);
-//                  fwrite(str, sizeof(char), sizeof(str), out);
                   fprintf(out, "%d,%d,%s,%d\n", j, i, index, pchunk[j].counter[i].frequency[w]);
-//                  fwrite(str, sizeof(char), sizeof(str), out);
               }
           }
-//          sprintf(str, "</Sequence %d>\n", i);
-//          fwrite(str, sizeof(char), sizeof(str), out);
       }
-//       printf("\n");
-
-//       sprintf(str, "</Chunk %d>\n", j);
-//       fwrite(str, sizeof(char), sizeof(str), out);
    }
    fclose(out);
+}
+
+void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
+{
+    FILE *out;
+    int cont = 0;
+    int cont_seq = 0;
+    lint fourk = pow(4, k);
+
+    out = fopen(file_out, "w");
+    int start = 0;
+    int end = nChunk == 1 ? 1 : offset;
+    for (int j = start; j < end; j++)
+    {
+        for (lint i = 0; i < (chunkSize); i++)
+        {
+            char *str = (char *) calloc(32, sizeof(char));
+            for (int w = 0; w < (pchunk[j].length[i] - k + 1); w++)
+            {
+                if (pchunk[j].counter[i].frequency[w] != 0)
+                {
+                    /*
+                    int index = 0;
+                    for (int c = 0; c < k; c++)
+                    {
+                        index += pchunk[j].counter[i].index[w][c] * pow(4, (k -1) - c);
+                    }
+                    str[index] = pchunk[j].counter[i].frequency[w] + 48;
+                     */
+                    sprintf(str, "%d ", pchunk[j].counter[i].frequency[w]);
+                     printf("%s", str);
+                    fwrite(str, sizeof(char), sizeof(str), out);
+                }
+            }
+            sprintf(str, "\n");
+            fwrite(str, sizeof(char), sizeof(str), out);
+            free(str);
+        }
+    }
+    fclose(out);
 }
 
 struct read* SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lint max, lint gnS, lint *nS, lint gnN, lint *nN, int nt)
@@ -324,9 +349,9 @@ int main(int argc, char* argv[])
    PrintFreq(seq, chunk, nChunk, chunkSize);
    et = time(NULL);
 
-//   if(chunkRemain) {
-//      PrintFreq(seq, chunk_remain, 1, rnS);
-//   }
+   if(chunkRemain) {
+      PrintFreq(seq, chunk_remain, 1, rnS);
+   }
 //    for (int w = 0; w < nChunk; w++)
 //    {
 //        for (int i = 0; i < nS; i++)
