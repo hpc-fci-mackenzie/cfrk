@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define SEQUENCE_SIZE 1024
+#define SEQUENCE_SIZE 50
 #define NUMBER_OF_SEQUENCES 10
 
 int main() {
@@ -27,14 +27,14 @@ int main() {
    {
       for(nofIndex = 0; nofIndex < NUMBER_OF_SEQUENCES; nofIndex++)
       {
-         fprintf(fp, ">gi|DNA para teste do algoritmo CFRK\n");
+         fprintf(fp, ">teste.%d %d %d\n", nofIndex + 1, nofIndex + 1, SEQUENCE_SIZE);
 
          for(ssIndex = 0; ssIndex < SEQUENCE_SIZE; ssIndex++)
          {
             putc(dna[rand() % 4], fp);
 
-            if(!((ssIndex + 1) % 75))
-               putc('\n', fp);
+//            if(!((ssIndex + 1) % 75))
+//               putc('\n', fp);
          }
 
          putc('\n', fp);

@@ -17,13 +17,14 @@ void ComputeFreq(struct read *rd, int k, int idx, lint nN) {
 
     int end = rd->start[idx] + (rd->length[idx] + 1);
 
-    int *index = (int *) malloc(sizeof(int)*k);
-    for (int i = rd->start[idx]; i < end; i++) {
+    int *index = (char *) malloc(sizeof(char)*k);
+    for (lint i = rd->start[idx]; i < end; i++) {
         index[0] = -1;
         if (i < nN) {
             // printf("@deb | nuc: ");
 //            #pragma omp parallel for
-            for (int c = 0; c < k; c++) {
+            for (lint c = 0; c < k; c++)
+            {
                 int nuc = rd->data[c + i];
 
                 if (nuc != -1) //Verifica se ha alguem que nao deve ser processado
@@ -32,6 +33,7 @@ void ComputeFreq(struct read *rd, int k, int idx, lint nN) {
                     index[c] = nuc;
                 } else {
                     index[0] = -1;
+                    break;
                 }
             }
             if (index[0] != -1)
@@ -54,10 +56,9 @@ void ComputeFreq(struct read *rd, int k, int idx, lint nN) {
                             if (rd->counter[idx].index[j][w] != index[w])
                             {
                                 is_equal = 0;
-                                break;
                             }
                         }
-                        if (is_equal)
+                        if (is_equal == 1)
                         {
                             rd->counter[idx].frequency[j]++;
                             break;

@@ -67,7 +67,7 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
     int cont = 0;
     int cont_seq = 0;
     lint fourk = pow(4, k);
-
+//    char str[32];
     out = fopen(file_out, "w");
     int start = 0;
     int end = nChunk == 1 ? 1 : offset;
@@ -75,7 +75,11 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
     {
         for (lint i = 0; i < (chunkSize); i++)
         {
-            char *str = (char *) calloc(32, sizeof(char));
+            char *str = (char *) malloc(32 * sizeof(char));
+            for (int z = 0; z < 32; z++)
+            {
+                str[z] = 0;
+            }
             for (int w = 0; w < (pchunk[j].length[i] - k + 1); w++)
             {
                 if (pchunk[j].counter[i].frequency[w] != 0)
@@ -89,7 +93,7 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
                     str[index] = pchunk[j].counter[i].frequency[w] + 48;
                      */
                     sprintf(str, "%d ", pchunk[j].counter[i].frequency[w]);
-                     printf("%s", str);
+//                     printf("%s", str);
                     fwrite(str, sizeof(char), sizeof(str), out);
                 }
             }
@@ -103,7 +107,7 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
 
 struct read* SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lint max, lint gnS, lint *nS, lint gnN, lint *nN, int nt)
 {
-   struct read *chunk = 0;
+   struct read *chunk;
    lint i;
    lint j;
    lint length = 0;
@@ -122,7 +126,7 @@ struct read* SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lin
    printf("@deb | SelectChunkRemain | length: %ld\n", length);
 
    chunk = (struct read *)malloc(sizeof(struct read));
-   chunk->data = (int*)malloc(sizeof(int) * length);
+   chunk->data = (char*)malloc(sizeof(char) * length);
    chunk->length = (int*)malloc(sizeof(int) * chunkSize);
    chunk->start = (lint*)malloc(sizeof(lint) * chunkSize);
 
@@ -180,9 +184,9 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
       // cudaMallocHost((void**)&chunk[it].data, sizeof(char)*length);
       // cudaMallocHost((void**)&chunk[it].length, sizeof(int)*chunkSize);
       // cudaMallocHost((void**)&chunk[it].start, sizeof(lint)*chunkSize);
-      chunk[it].data = (int*)calloc(length, sizeof(int));
-      chunk[it].length = (int*)calloc(chunkSize, sizeof(int));
-      chunk[it].start = (lint*)calloc(chunkSize, sizeof(lint));
+      chunk[it].data = (char*)malloc(length * sizeof(char));
+      chunk[it].length = (int*)malloc(chunkSize * sizeof(int));
+      chunk[it].start = (lint*)malloc(chunkSize * sizeof(lint));
 
       // printf("- @deb | chunk[it].data size: %ld (%ld)\n", length, sizeof(char));
       // printf("- @deb | chunk[it].length size: %d (%ld)\n", chunkSize, sizeof(int));
@@ -291,6 +295,7 @@ int main(int argc, char* argv[])
    lint st = time(NULL);
    puts("\t... Reading sequences ...");
    rd = (struct read*)calloc(1, sizeof(struct read));
+   puts("\t... Reading sequences ...");
    struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
    // ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
 
@@ -305,7 +310,7 @@ int main(int argc, char* argv[])
    printf("> nChunk: %d\n", &nChunk);
    int i = 0;
    
-   chunk = (struct read *)calloc(nChunk, sizeof(struct read));
+   chunk = (struct read *)malloc(nChunk*sizeof(struct read));
    nS = (lint*)calloc(nChunk, sizeof(lint));
    nN = (lint*)calloc(nChunk, sizeof(lint));
 

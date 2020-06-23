@@ -16,13 +16,13 @@ struct seq
 {
    char *header;
    char *read;
-   int *data;
+   char *data;
    int len;
 };
 
 struct read// Used to read sequences
 {
-   int *data;
+   char *data;
    int *length;
    lint *start;
    struct counter *counter;
@@ -30,7 +30,7 @@ struct read// Used to read sequences
 };
 
 struct counter {
-    int **index;
+    char **index;
     int *frequency;
 };
 

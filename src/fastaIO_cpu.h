@@ -49,7 +49,7 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
         if (line[0] == '>')
         {
             count++;
-            seq[count].header = (char*)malloc(sizeof(char)*len);
+            seq[count].header = (char*)malloc(sizeof(char)*size);
             strcpy(seq[count].header, line);
             flag = 0;
         }
@@ -57,7 +57,7 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
         {
             if (flag == 0)
             {
-                seq[count].read = (char*)malloc(sizeof(char)*len);
+                seq[count].read = (char*)malloc(sizeof(char)*size);
                 strcat(seq[count].read, line);
                 seq[count].len = strlen(seq[count].read) - 1;
                 flag = 1;
@@ -68,7 +68,7 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
                 aux = (char*)malloc(sizeof(char)*oldRead);
                 strcpy(aux, seq[count].read);
                 seq[count].read = NULL;
-                seq[count].read = (char*)malloc(sizeof(char)*(len+oldRead));
+                seq[count].read = (char*)malloc(sizeof(char)*(size+oldRead));
                 strcat(seq[count].read, aux);
                 strcat(seq[count].read, line);
                 seq[count].len = strlen(seq[count].read) - 1; // len variable have no use since the code uses strlen function to get Length information
@@ -89,9 +89,9 @@ void ProcessData(struct seq *seq, struct read *rd, lint nN, lint nS, ushort flag
    cudaMallocHost((void**)&rd->length, sizeof(int)*nS);
    cudaMallocHost((void**)&rd->start, sizeof(lint)*nS);
 #else
-   rd->data = (int*)calloc((nN + nS), sizeof(int));
-   rd->length = (int*)calloc(nS, sizeof(int));
-   rd->start = (lint*)calloc(nS, sizeof(lint));
+   rd->data = (char*)malloc((nN + nS) * sizeof(char));
+   rd->length = (int*)malloc(nS * sizeof(int));
+   rd->start = (lint*)malloc(nS * sizeof(lint));
 #endif
 
    // rd->start[0] = 0;
@@ -127,7 +127,7 @@ struct seq *ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, 
       len = seq[i].len;
       lnN += len;
 
-       seq[i].data = (int*)malloc(sizeof(int)*len);
+       seq[i].data = (char*)malloc(sizeof(char)*len);
 //      seq[i].data = (char*)calloc(len, sizeof(char));
 
       for (j = 0; j < len; j++)
