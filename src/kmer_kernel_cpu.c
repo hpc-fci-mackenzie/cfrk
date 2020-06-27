@@ -16,7 +16,7 @@
 void ComputeFreq(struct read *rd, int k, int idx, lint nN)
 {
     int end = rd->start[idx] + (rd->length[idx] + 1);
-    int *index = (char *) malloc(sizeof(char) * k);
+    char *index = (char *) malloc(sizeof(char) * k);
 
     for (lint i = rd->start[idx]; i < end; i++)
     {
@@ -71,5 +71,6 @@ void ComputeFreq(struct read *rd, int k, int idx, lint nN)
             }
         }
     }
+    free(index);
 }
 

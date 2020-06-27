@@ -29,8 +29,8 @@ CSOURCES=$(wildcard $(SRC_DIR)/*.c)
 OBJFILES=$(patsubst $(SRC_DIR)/%.c,$(SRC_DIR)/%.o,$(CSOURCES))
 
 # Flags de compilação
-CFLAGS=-Wall -DCPU # -fopenmp
-LFLAGS=-Wall -lpthread -lm
+CFLAGS=-Wall -DCPU -fopenmp
+LFLAGS=-Wall -lpthread -lm -fopenmp
 
 cpu: $(BIN_DIR)/$(OUTPUT)
 	@rm $(SRC_DIR)/*.o

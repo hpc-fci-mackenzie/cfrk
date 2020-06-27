@@ -62,12 +62,12 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
                 seq[count].read = (char *) malloc(sizeof(char) * (len + oldRead));
                 strcat(seq[count].read, aux);
                 strcat(seq[count].read, line);
-                seq[count].len = strlen(seq[count].read) -
-                                 1; // len variable have no use since the code uses strlen function to get Length information
+                seq[count].len = strlen(seq[count].read) - 1; // len variable have no use since the code uses strlen function to get Length information
                 aux = NULL;
             }
         }
     }
+    free(aux);
     return seq;
 }
 
@@ -113,7 +113,7 @@ struct seq *ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, 
 
         seq[i].data = (char *) malloc(sizeof(char) * len);
 //      seq[i].data = (char*)calloc(len, sizeof(char));
-
+        #pragma omp parallel for
         for (j = 0; j < len; j++)
         {
             switch (seq[i].read[j])
