@@ -61,17 +61,19 @@ void PrintFreqCSV(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSi
     fclose(out);
 }
 
-void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
+void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize, struct read *rchunk, lint rChunkSize)
 {
     FILE *out;
     lint fourk = pow(4, k);
     out = fopen(file_out, "w");
     int start = 0;
-    int end = nChunk == 1 ? 1 : offset;
+    int end = nChunk;
+    // Same size Chunks
     for (int j = start; j < end; j++)
     {
         for (lint i = 0; i < (chunkSize); i++)
         {
+
             int n_combination = (pchunk[j].length[i] - k + 1);
             int *line_index = (int *) malloc(fourk * sizeof(int));
             int *line_frequency = (int *) malloc(fourk * sizeof(int));
@@ -97,6 +99,53 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
             {
                 str[z] = 0;
             }
+            sprintf(str, "%d ", i + (chunkSize * j));
+            fwrite(str, sizeof(char), sizeof(str), out);
+            for (int w = 0; w < fourk; w++)
+            {
+                if (line_index[w] > -1)
+                {
+                    sprintf(str, "%d:%d ", line_index[w], line_frequency[w]);
+                    fwrite(str, sizeof(char), sizeof(str), out);
+                }
+            }
+            sprintf(str, "\t\t\t\t\n");
+            fwrite(str, sizeof(char), sizeof(str), out);
+            free(str);
+        }
+    }
+    // Remain sequences
+    if (rChunkSize > 0)
+    {
+        for (lint i = 0; i < (rChunkSize); i++)
+        {
+            int n_combination = (rchunk->length[i] - k + 1);
+            int *line_index = (int *) malloc(fourk * sizeof(int));
+            int *line_frequency = (int *) malloc(fourk * sizeof(int));
+            for (int t = 0; t < fourk; t++)
+            {
+                line_index[t] = -1;
+            }
+            for (int w = 0; w < n_combination; w++)
+            {
+                if (rchunk->counter[i].frequency[w] != 0)
+                {
+                    int index = 0;
+                    for (int c = 0; c < k; c++)
+                    {
+                        index += rchunk->counter[i].index[w][c] * pow(4, (k - 1) - c);
+                    }
+                    line_index[index] = index;
+                    line_frequency[index] = rchunk->counter[i].frequency[w];
+                }
+            }
+            char *str = (char *) malloc(32 * sizeof(char));
+            for (int z = 0; z < 32; z++)
+            {
+                str[z] = 0;
+            }
+            sprintf(str, "%d ", i + (chunkSize * nChunk));
+            fwrite(str, sizeof(char), sizeof(str), out);
             for (int w = 0; w < fourk; w++)
             {
                 if (line_index[w] > -1)
@@ -113,8 +162,7 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
     fclose(out);
 }
 
-struct read *SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lint max, lint gnS, lint *nS, lint gnN, lint *nN,
-                               int nt)
+struct read *SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lint max, lint gnS, lint *nS, lint gnN, lint *nN, int nt)
 {
     struct read *chunk;
     lint i;
@@ -132,7 +180,6 @@ struct read *SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lin
         length += rd->length[id] + 1;
     }
 
-    printf("@deb | SelectChunkRemain | length: %ld\n", length);
 
     chunk = (struct read *) malloc(sizeof(struct read));
     chunk->data = (char *) malloc(sizeof(char) * length);
@@ -167,12 +214,9 @@ struct read *SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lin
     return chunk;
 }
 
-void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort chunkSize, lint max, lint gnS, lint *nS,
-                 lint gnN, lint *nN, int nt)
+void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort chunkSize, lint max, lint gnS, lint *nS, lint gnN, lint *nN, int nt)
 {
     lint i, j, it;
-
-    // printf("@deb | Parameters\n\tnChunk: %d\n\tchunkSize: %d\n\tmax: %ld\n\tgnS: %ld\n\tnS: %ld\n\tgnN: %ld\n\tnN: %ld\n\tnt: %d\n", nChunk, chunkSize, max, gnS, *nS, gnN, *nN, nt);
 
     for (it = 0; it < nChunk; it++)
     {
@@ -191,34 +235,20 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
             length += rd->length[id] + 1;
         }
 
-        // cudaMallocHost((void**)&chunk[it].data, sizeof(char)*length);
-        // cudaMallocHost((void**)&chunk[it].length, sizeof(int)*chunkSize);
-        // cudaMallocHost((void**)&chunk[it].start, sizeof(lint)*chunkSize);
         chunk[it].data = (char *) malloc(length * sizeof(char));
         chunk[it].length = (int *) malloc(chunkSize * sizeof(int));
         chunk[it].start = (lint *) malloc(chunkSize * sizeof(lint));
 
-        // printf("- @deb | chunk[it].data size: %ld (%ld)\n", length, sizeof(char));
-        // printf("- @deb | chunk[it].length size: %d (%ld)\n", chunkSize, sizeof(int));
-        // printf("- @deb | chunk[it].start size: %d (%ld)\n", chunkSize, sizeof(lint));
-
-        // Copy rd->data to chunk->data
         lint start = rd->start[chunkSize * it];
         lint end = start + (lint) length;
 
-        // printf("@deb (%ld)| length: %ld - start: %ld - end: %ld\n", it, length, start, end);
-
-        // #pragma omp parallel for num_threads(nt)
         for (j = start; j < end; j++)
         {
             chunk[it].data[j - start] = rd->data[j];
-            // printf("chunk[%ld].data[%ld]: %d\n", it, j-start, chunk[it].data[j-start]);
         }
 
         chunk[it].length[0] = rd->length[chunkSize * it];
         chunk[it].start[0] = 0;
-
-        // printf("@deb | chunk[%ld].length[0]: %d\n", it, chunk[it].length[0]);
 
         // Copy start and length
         for (i = 1; i < max; i++)
@@ -235,18 +265,13 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
 
 void *LaunchKmer(void *threadId)
 {
-    int start = 0;
+    int *start = (int *) threadId;
     int end = offset;
-    // printf("\t>>> ttid: %ld - start: %d - end: %d - offset: %d\n", *tid, start, end, offset);
 
-    for (int i = start; i < end; i++)
+    for (int i = *start; i < end; i++)
     {
         printf("\tkmer_main - chunk(%d)\n", i);
         kmer_main(&chunk[i], nN[i], nS[i], k, device);
-        // Waits for stream tasks to complete.
-//      free(chunk[i].data);
-//      free(chunk[i].length);
-//      free(chunk[i].start);
     }
 
     return NULL;
@@ -311,33 +336,37 @@ int main(int argc, char *argv[])
        (!) LEITURA DE SEQUÊNCIAS (FASTA)
     */
     struct read *rd;
-    lint st = time(NULL);
+    double st = time(NULL);
     puts("\t... Reading sequences ...");
     rd = (struct read *) calloc(1, sizeof(struct read));
     struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
 
-    lint et = time(NULL);
-    printf("> Reading time: %ld\n", (et - st));
+    double et = time(NULL);
+    printf("> Reading time: %1f\n", (et - st));
     printf("> nS: %ld, nN: %ld\n", gnS, gnN);
 
     /*
        (!) DIVIDINDO OS DADOS EM CHUNKS
     */
     int nChunk = floor(gnS / chunkSize);
-    printf("> nChunk: %d\n", &nChunk);
+    printf("> nChunk: %d\n", nChunk);
     int i = 0;
 
     chunk = (struct read *) malloc(nChunk * sizeof(struct read));
     nS = (lint *) calloc(nChunk, sizeof(lint));
     nN = (lint *) calloc(nChunk, sizeof(lint));
 
+    st = time(NULL);
     SelectChunk(chunk, nChunk, rd, chunkSize, chunkSize, gnS, nS, gnN, nN, nt);
+    et = time(NULL);
+    printf("> Chunk Construction Time: %1f\n", (et - st));
 
     offset = floor(nChunk / devCount);
     printf("> offset: %d\n", offset);
 
     pthread_t threads[devCount];
 
+    st = time(NULL);
     for (i = 0; i < devCount; i++)
     {
         pthread_create(&threads[i], NULL, LaunchKmer, (void *) &i);
@@ -347,6 +376,8 @@ int main(int argc, char *argv[])
     {
         pthread_join(threads[i], NULL);
     }
+    et = time(NULL);
+    printf("> Processing Time: %1f\n", (et - st));
 
     int threadRemain = nChunk - (offset * devCount);
     printf("> threadRemain: %d\n", threadRemain);
@@ -368,9 +399,9 @@ int main(int argc, char *argv[])
     }
 
     st = time(NULL);
-    PrintFreq(seq, chunk, nChunk, chunkSize);
+    PrintFreq(seq, chunk, nChunk, chunkSize, chunk_remain, rnS);
     et = time(NULL);
     free(chunk);
-    printf("> Writing time: %ld\n", (et - st));
+    printf("> Writing time: %1f\n", (et - st));
     return 0;
 }
