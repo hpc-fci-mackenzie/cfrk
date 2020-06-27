@@ -49,7 +49,7 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
         if (line[0] == '>')
         {
             count++;
-            seq[count].header = (char*)malloc(sizeof(char)*size);
+            seq[count].header = (char*)malloc(sizeof(char)*len);
             strcpy(seq[count].header, line);
             flag = 0;
         }
@@ -57,7 +57,7 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
         {
             if (flag == 0)
             {
-                seq[count].read = (char*)malloc(sizeof(char)*size);
+                seq[count].read = (char*)malloc(sizeof(char)*len);
                 strcat(seq[count].read, line);
                 seq[count].len = strlen(seq[count].read) - 1;
                 flag = 1;
@@ -68,7 +68,7 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
                 aux = (char*)malloc(sizeof(char)*oldRead);
                 strcpy(aux, seq[count].read);
                 seq[count].read = NULL;
-                seq[count].read = (char*)malloc(sizeof(char)*(size+oldRead));
+                seq[count].read = (char*)malloc(sizeof(char)*(len+oldRead));
                 strcat(seq[count].read, aux);
                 strcat(seq[count].read, line);
                 seq[count].len = strlen(seq[count].read) - 1; // len variable have no use since the code uses strlen function to get Length information

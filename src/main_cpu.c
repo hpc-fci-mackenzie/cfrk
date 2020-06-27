@@ -84,15 +84,15 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
             {
                 if (pchunk[j].counter[i].frequency[w] != 0)
                 {
-                    /*
+
                     int index = 0;
                     for (int c = 0; c < k; c++)
                     {
                         index += pchunk[j].counter[i].index[w][c] * pow(4, (k -1) - c);
                     }
-                    str[index] = pchunk[j].counter[i].frequency[w] + 48;
-                     */
-                    sprintf(str, "%d ", pchunk[j].counter[i].frequency[w]);
+//                    str[index] = pchunk[j].counter[i].frequency[w] + 48;
+
+                    sprintf(str, "%d:%d ", index, pchunk[j].counter[i].frequency[w]);
 //                     printf("%s", str);
                     fwrite(str, sizeof(char), sizeof(str), out);
                 }
@@ -354,9 +354,9 @@ int main(int argc, char* argv[])
    PrintFreq(seq, chunk, nChunk, chunkSize);
    et = time(NULL);
 
-   if(chunkRemain) {
-      PrintFreq(seq, chunk_remain, 1, rnS);
-   }
+//   if(chunkRemain) {
+//      PrintFreq(seq, chunk_remain, 1, rnS);
+//   }
 //    for (int w = 0; w < nChunk; w++)
 //    {
 //        for (int i = 0; i < nS; i++)
