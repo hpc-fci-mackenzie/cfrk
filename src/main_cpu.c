@@ -61,11 +61,15 @@ void PrintFreqCSV(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSi
    fclose(out);
 }
 
+struct aux {
+    int order;
+    char *text;
+};
+
 void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
 {
     FILE *out;
-    int cont = 0;
-    int cont_seq = 0;
+
     lint fourk = pow(4, k);
 //    char str[32];
     out = fopen(file_out, "w");
@@ -75,24 +79,36 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
     {
         for (lint i = 0; i < (chunkSize); i++)
         {
-            char *str = (char *) malloc(32 * sizeof(char));
-            for (int z = 0; z < 32; z++)
+            int n_combination = (pchunk[j].length[i] - k + 1);
+            int *line_index =     (int *) malloc(fourk * sizeof(int));
+            int *line_frequency = (int *) malloc(fourk * sizeof(int));
+            for (int t = 0; t < fourk; t ++)
             {
-                str[z] = 0;
+                line_index[t] = -1;
             }
-            for (int w = 0; w < (pchunk[j].length[i] - k + 1); w++)
+            for (int w = 0; w < n_combination; w++)
             {
                 if (pchunk[j].counter[i].frequency[w] != 0)
                 {
-
                     int index = 0;
                     for (int c = 0; c < k; c++)
                     {
                         index += pchunk[j].counter[i].index[w][c] * pow(4, (k -1) - c);
                     }
-//                    str[index] = pchunk[j].counter[i].frequency[w] + 48;
-
-                    sprintf(str, "%d:%d ", index, pchunk[j].counter[i].frequency[w]);
+                    line_index[index] = index;
+                    line_frequency[index] = pchunk[j].counter[i].frequency[w];
+                }
+            }
+            char *str = (char *) malloc(32 * sizeof(char));
+            for (int z = 0; z < 32; z++)
+            {
+                str[z] = 0;
+            }
+            for (int w = 0; w < fourk; w++)
+            {
+                if (line_index[w] > -1)
+                {
+                    sprintf(str, "%d:%d ", line_index[w], line_frequency[w]);
 //                     printf("%s", str);
                     fwrite(str, sizeof(char), sizeof(str), out);
                 }
