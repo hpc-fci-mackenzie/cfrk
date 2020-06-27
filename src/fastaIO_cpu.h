@@ -8,14 +8,8 @@
 #include "tipos_cpu.h"
 #include <stdlib.h>
 
-#ifndef CPU
-#include <zlib.h>
-#include <cuda.h>
-#endif
 
 int GetNs(char *FileName)
-/*Get the length of the sequence
- * */
 {
     char temp[64], cmd[512];
     FILE *in;
@@ -28,9 +22,6 @@ int GetNs(char *FileName)
 }
 
 struct seq *ReadFasta(char *fileName, lint *n_sequence)
-/*
- * Create sequence struct from file information
- * */
 {
     FILE *fastaFile;
     char *line = NULL, *aux;
@@ -40,7 +31,7 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
     int count = -1, flag = 0;
 
     *n_sequence = GetNs(fileName); // Gets the sequence as Integer
-    seq = (struct seq*)malloc(sizeof(struct seq) * *n_sequence); // Allocate sequence memory on Main Memory
+    seq = (struct seq *) malloc(sizeof(struct seq) * *n_sequence); // Allocate sequence memory on Main Memory
 
     if ((fastaFile = fopen(fileName, "r")) == NULL) exit(EXIT_FAILURE);
 
@@ -49,7 +40,7 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
         if (line[0] == '>')
         {
             count++;
-            seq[count].header = (char*)malloc(sizeof(char)*len);
+            seq[count].header = (char *) malloc(sizeof(char) * len);
             strcpy(seq[count].header, line);
             flag = 0;
         }
@@ -57,7 +48,7 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
         {
             if (flag == 0)
             {
-                seq[count].read = (char*)malloc(sizeof(char)*len);
+                seq[count].read = (char *) malloc(sizeof(char) * len);
                 strcat(seq[count].read, line);
                 seq[count].len = strlen(seq[count].read) - 1;
                 flag = 1;
@@ -65,13 +56,14 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
             else
             {
                 oldRead = strlen(seq[count].read);
-                aux = (char*)malloc(sizeof(char)*oldRead);
+                aux = (char *) malloc(sizeof(char) * oldRead);
                 strcpy(aux, seq[count].read);
                 seq[count].read = NULL;
-                seq[count].read = (char*)malloc(sizeof(char)*(len+oldRead));
+                seq[count].read = (char *) malloc(sizeof(char) * (len + oldRead));
                 strcat(seq[count].read, aux);
                 strcat(seq[count].read, line);
-                seq[count].len = strlen(seq[count].read) - 1; // len variable have no use since the code uses strlen function to get Length information
+                seq[count].len = strlen(seq[count].read) -
+                                 1; // len variable have no use since the code uses strlen function to get Length information
                 aux = NULL;
             }
         }
@@ -82,81 +74,78 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
 //-------------------------------------------------------------------------------------------
 void ProcessData(struct seq *seq, struct read *rd, lint nN, lint nS, ushort flag)
 {
-   lint i, j, pos = 0, seqCount = 0;
+    lint i, j, pos = 0, seqCount = 0;
 
-#ifndef CPU
-   cudaMallocHost((void**)&rd->data, sizeof(char)*(nN + nS));
-   cudaMallocHost((void**)&rd->length, sizeof(int)*nS);
-   cudaMallocHost((void**)&rd->start, sizeof(lint)*nS);
-#else
-   rd->data = (char*)malloc((nN + nS) * sizeof(char));
-   rd->length = (int*)malloc(nS * sizeof(int));
-   rd->start = (lint*)malloc(nS * sizeof(lint));
-#endif
+    rd->data = (char *) malloc((nN + nS) * sizeof(char));
+    rd->length = (int *) malloc(nS * sizeof(int));
+    rd->start = (lint *) malloc(nS * sizeof(lint));
 
-   // rd->start[0] = 0;
-
-   for (j = 0; j < nS; j++)
-   {
-      for(i = 0; i < seq[j].len; i++)
-      {
-         rd->data[pos] = seq[j].data[i];
-         pos++;
-      }
-      rd->data[pos] = -1;
-      pos++;
-      rd->length[seqCount] = seq[j].len;
-      seqCount++;
-      rd->start[seqCount] = pos;
-      // printf("@deb | ProcessData | rd->start[%ld]: %ld\n", seqCount, rd->start[seqCount]);
-   }
+    for (j = 0; j < nS; j++)
+    {
+        for (i = 0; i < seq[j].len; i++)
+        {
+            rd->data[pos] = seq[j].data[i];
+            pos++;
+        }
+        rd->data[pos] = -1;
+        pos++;
+        rd->length[seqCount] = seq[j].len;
+        seqCount++;
+        rd->start[seqCount] = pos;
+        // printf("@deb | ProcessData | rd->start[%ld]: %ld\n", seqCount, rd->start[seqCount]);
+    }
 }
 
 //-------------------------------------------------------------------------
 struct seq *ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, ushort flag)
 {
-   struct seq *seq;
-   int len; // tamanho de cada sequência
-   lint lnN = 0; // soma do tamanho de todas as sequências
-   int i, j;
+    struct seq *seq;
+    int len; // tamanho de cada sequência
+    lint lnN = 0; // soma do tamanho de todas as sequências
+    int i, j;
 
-   seq = ReadFasta(file, nS);
+    seq = ReadFasta(file, nS);
 
-   for (i = 0; i < *nS; i++)
-   {
-      len = seq[i].len;
-      lnN += len;
+    for (i = 0; i < *nS; i++)
+    {
+        len = seq[i].len;
+        lnN += len;
 
-       seq[i].data = (char*)malloc(sizeof(char)*len);
+        seq[i].data = (char *) malloc(sizeof(char) * len);
 //      seq[i].data = (char*)calloc(len, sizeof(char));
 
-      for (j = 0; j < len; j++)
-      {
-         switch(seq[i].read[j])
-         {   
-            case 'a':
-            case 'A':
-               seq[i].data[j] = 0; break;
-            case 'c':
-            case 'C':
-               seq[i].data[j] = 1; break;
-            case 'g':
-            case 'G':
-               seq[i].data[j] = 2; break;
-            case 't':
-            case 'T':
-               seq[i].data[j] = 3; break;
-            default:
-               seq[i].data[j] = -1; break;
-         }
-      }
-   }
+        for (j = 0; j < len; j++)
+        {
+            switch (seq[i].read[j])
+            {
+                case 'a':
+                case 'A':
+                    seq[i].data[j] = 0;
+                    break;
+                case 'c':
+                case 'C':
+                    seq[i].data[j] = 1;
+                    break;
+                case 'g':
+                case 'G':
+                    seq[i].data[j] = 2;
+                    break;
+                case 't':
+                case 'T':
+                    seq[i].data[j] = 3;
+                    break;
+                default:
+                    seq[i].data[j] = -1;
+                    break;
+            }
+        }
+    }
 
-   ProcessData(seq, rd, lnN, *nS, flag);
+    ProcessData(seq, rd, lnN, *nS, flag);
 
-   *nN = lnN + *nS;
+    *nN = lnN + *nS;
 
-   return seq;
+    return seq;
 }
 
 #endif

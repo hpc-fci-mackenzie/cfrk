@@ -13,16 +13,16 @@
    repetição dos k-mers. O resultado do cálculo é armazenado em um vetor
    denominado vetor de frequência.
 */
-void ComputeFreq(struct read *rd, int k, int idx, lint nN) {
-
+void ComputeFreq(struct read *rd, int k, int idx, lint nN)
+{
     int end = rd->start[idx] + (rd->length[idx] + 1);
+    int *index = (char *) malloc(sizeof(char) * k);
 
-    int *index = (char *) malloc(sizeof(char)*k);
-    for (lint i = rd->start[idx]; i < end; i++) {
+    for (lint i = rd->start[idx]; i < end; i++)
+    {
         index[0] = -1;
-        if (i < nN) {
-            // printf("@deb | nuc: ");
-//            #pragma omp parallel for
+        if (i < nN)
+        {
             for (lint c = 0; c < k; c++)
             {
                 int nuc = rd->data[c + i];
@@ -31,16 +31,19 @@ void ComputeFreq(struct read *rd, int k, int idx, lint nN) {
                 {
                     //printf("%d", nuc);
                     index[c] = nuc;
-                } else {
+                }
+                else
+                {
                     index[0] = -1;
                     break;
                 }
             }
             if (index[0] != -1)
             {
-                for (int j = 0; j < (rd->length[idx] -k + 1); j++) {
-                    if (rd->counter[idx].index[j][0] == -1) {
-//                        #pragma omp parallel for
+                for (int j = 0; j < (rd->length[idx] - k + 1); j++)
+                {
+                    if (rd->counter[idx].index[j][0] == -1)
+                    {
                         for (int w = 0; w < k; w++)
                         {
                             rd->counter[idx].index[j][w] = index[w];

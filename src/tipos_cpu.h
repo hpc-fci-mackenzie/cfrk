@@ -9,27 +9,25 @@ typedef unsigned short ushort;
 typedef long int lint;
 typedef unsigned int uint;
 
-//0 disabled; 1 enable
-// const int DBG = 0;
-
 struct seq
 {
-   char *header;
-   char *read;
-   char *data;
-   int len;
+    char *header;
+    char *read;
+    char *data;
+    int len;
 };
 
 struct read// Used to read sequences
 {
-   char *data;
-   int *length;
-   lint *start;
-   struct counter *counter;
-   struct read *next;
+    char *data;
+    int *length;
+    lint *start;
+    struct counter *counter;
+    struct read *next;
 };
 
-struct counter {
+struct counter
+{
     char **index;
     int *frequency;
 };
