@@ -282,6 +282,46 @@ void *LaunchKmer(void *threadId)
     return NULL;
 }
 
+void memoryUsage(int k, int chunkSize, int n_sequence)
+{
+    FILE *out;
+    out = fopen("memory.csv", "w");
+    fprintf(out, "K,Memory\n");
+    for (int x = 1; x <= 300; x++)
+    {
+        size_t integer = sizeof(int);
+        size_t character = sizeof(char);
+        size_t long_integer = sizeof(lint);
+        int nChunk = floor(n_sequence/chunkSize);
+        int remaining_sequences = n_sequence - (nChunk * chunkSize);
+        size_t data_vector = (chunkSize) * character;
+        size_t length_vector = chunkSize * character;
+        size_t start_vector = chunkSize * long_integer;
+        size_t counter_vector = 0;
+        int sequence_length = 300;
+        for (int i = 0; i < chunkSize; i++)
+        {
+            counter_vector += (sequence_length - x +1) * ((character) + character );
+        }
+        size_t each_chunk_size = data_vector + length_vector + start_vector + counter_vector;
+//    printf("Size of a Chunk: %d\n", each_chunk_size);
+//    printf("All Chunks(%d): %d\n", nChunk, nChunk * each_chunk_size);
+        data_vector = (remaining_sequences) * character;
+        length_vector = remaining_sequences * character;
+        start_vector = remaining_sequences * long_integer;
+        counter_vector = 0;
+        for (int i = 0; i < remaining_sequences; i++)
+        {
+            counter_vector += (sequence_length - x +1) * ((character) + character);
+        }
+        size_t remaining_chunk_size = data_vector + length_vector + start_vector + counter_vector;
+//    printf("Remaining Sequences: %d\n", remaining_sequences);
+//    printf("Remaining Sequences Size: %d\n", remaining_chunk_size);
+        fprintf(out, "%d,%d\n", x, remaining_chunk_size + (nChunk * each_chunk_size));
+    }
+    fclose(out);
+}
+
 int main(int argc, char *argv[])
 {
     lint gnN, gnS, chunkSize = 8192;
@@ -339,7 +379,10 @@ int main(int argc, char *argv[])
     double et = time(NULL);
     printf("> Reading time: %1f\n", (et - st));
     printf("> nS: %ld, nN: %ld\n", gnS, gnN);
-
+    for (int x = 1; x <= 300; x++)
+    {
+        memoryUsage(x, chunkSize, gnS);
+    }
     /*
        (!) DIVIDINDO OS DADOS EM CHUNKS
     */
