@@ -28,7 +28,7 @@ struct read// Used to read sequences
 
 struct counter
 {
-    char **index;
+    int **index;
     int *frequency;
 };
 

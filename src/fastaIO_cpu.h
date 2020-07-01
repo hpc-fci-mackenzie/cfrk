@@ -67,7 +67,7 @@ struct seq *ReadFasta(char *fileName, lint *n_sequence)
             }
         }
     }
-    free(aux);
+//    free(aux);
     return seq;
 }
 
@@ -113,7 +113,7 @@ struct seq *ReadFASTASequences(char *file, lint *nN, lint *nS, struct read *rd, 
 
         seq[i].data = (char *) malloc(sizeof(char) * len);
 //      seq[i].data = (char*)calloc(len, sizeof(char));
-        #pragma omp parallel for
+
         for (j = 0; j < len; j++)
         {
             switch (seq[i].read[j])

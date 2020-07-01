@@ -102,18 +102,18 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize,
             {
                 str[z] = 0;
             }
-            sprintf(str, "%d ", i + (chunkSize * j));
-            fwrite(str, sizeof(char), sizeof(str), out);
             for (int w = 0; w < fourk; w++)
             {
                 if (line_index[w] > -1)
                 {
-                    sprintf(str, "%d:%d ", line_index[w], line_frequency[w]);
-                    fwrite(str, sizeof(char), sizeof(str), out);
+                    fprintf(out, "%d:%d ", line_index[w], line_frequency[w]);
+                }
+                else
+                {
+                    fprintf(out, "%d:%d ", w, 0);
                 }
             }
-            sprintf(str, "\t\t\t\t\n");
-            fwrite(str, sizeof(char), sizeof(str), out);
+            fprintf(out, "\t\t\t\t\n");
             free(str);
         }
     }
@@ -150,18 +150,18 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize,
             {
                 str[z] = 0;
             }
-            sprintf(str, "%d ", i + (chunkSize * nChunk));
-            fwrite(str, sizeof(char), sizeof(str), out);
             for (int w = 0; w < fourk; w++)
             {
                 if (line_index[w] > -1)
                 {
-                    sprintf(str, "%d:%d ", line_index[w], line_frequency[w]);
-                    fwrite(str, sizeof(char), sizeof(str), out);
+                    fprintf(out, "%d:%d ", line_index[w], line_frequency[w]);
+                }
+                else
+                {
+                    fprintf(out, "%d:%d ", w, 0);
                 }
             }
-            sprintf(str, "\t\t\t\t\n");
-            fwrite(str, sizeof(char), sizeof(str), out);
+            fprintf(out, "\t\t\t\t\n");
             free(str);
         }
     }
@@ -326,7 +326,7 @@ int main(int argc, char *argv[])
 {
     lint gnN, gnS, chunkSize = 8192;
     int devCount = 1;
-    int nt = omp_get_max_threads();
+    int nt = 4;
     char dataset[FILENAME_LENGTH] = {0};
 
     /*
@@ -366,23 +366,23 @@ int main(int argc, char *argv[])
     }
 
     printf("Usage:\n> dataset: %s\n> file_out: %s\n> k: %d\n> nt: %d\n> chunkSize: %d\n", dataset, file_out, k, nt, (int) chunkSize);
-    omp_set_num_threads(nt);
+//    omp_set_num_threads(nt);
     /*
        (!) LEITURA DE SEQUÊNCIAS (FASTA)
     */
     struct read *rd;
     double st = time(NULL);
     puts("\t... Reading sequences ...");
-    rd = (struct read *) calloc(1, sizeof(struct read));
+    rd = (struct read *) malloc( sizeof(struct read));
     struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
 
     double et = time(NULL);
     printf("> Reading time: %1f\n", (et - st));
     printf("> nS: %ld, nN: %ld\n", gnS, gnN);
-    for (int x = 1; x <= 300; x++)
-    {
-        memoryUsage(x, chunkSize, gnS);
-    }
+//    for (int x = 1; x <= 300; x++)
+//    {
+//        memoryUsage(x, chunkSize, gnS);
+//    }
     /*
        (!) DIVIDINDO OS DADOS EM CHUNKS
     */
@@ -391,8 +391,8 @@ int main(int argc, char *argv[])
     int i = 0;
 
     chunk = (struct read *) malloc(nChunk * sizeof(struct read));
-    nS = (lint *) calloc(nChunk, sizeof(lint));
-    nN = (lint *) calloc(nChunk, sizeof(lint));
+    nS = (lint *) malloc(nChunk * sizeof(lint));
+    nN = (lint *) malloc(nChunk * sizeof(lint));
 
     st = time(NULL);
     SelectChunk(chunk, nChunk, rd, chunkSize, chunkSize, gnS, nS, gnN, nN);
@@ -405,7 +405,6 @@ int main(int argc, char *argv[])
 
 
     st = time(NULL);
-//    #pragma omp parallel for
     for (i = 0; i < nChunk; i++)
     {
 //        printf("\tkmer_main - chunk(%d)\n", i);

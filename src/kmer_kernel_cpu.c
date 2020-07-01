@@ -16,10 +16,11 @@
 void ComputeFreq(struct read *rd, int k, int idx, lint nN)
 {
     int end = rd->start[idx] + (rd->length[idx] + 1);
-    char *index = (char *) malloc(sizeof(char) * k);
 
-    for (lint i = rd->start[idx]; i < end; i++)
+
+    for (int i = rd->start[idx]; i < end; i++)
     {
+        int *index = (int *) malloc(sizeof(int) * k);
         index[0] = -1;
         if (i < nN)
         {
@@ -29,7 +30,6 @@ void ComputeFreq(struct read *rd, int k, int idx, lint nN)
 
                 if (nuc != -1) //Verifica se ha alguem que nao deve ser processado
                 {
-                    //printf("%d", nuc);
                     index[c] = nuc;
                 }
                 else
@@ -59,6 +59,7 @@ void ComputeFreq(struct read *rd, int k, int idx, lint nN)
                             if (rd->counter[idx].index[j][w] != index[w])
                             {
                                 is_equal = 0;
+                                break;
                             }
                         }
                         if (is_equal == 1)
@@ -70,7 +71,7 @@ void ComputeFreq(struct read *rd, int k, int idx, lint nN)
                 }
             }
         }
+        free(index);
     }
-    free(index);
 }
 
