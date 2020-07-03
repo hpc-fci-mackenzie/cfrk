@@ -14,7 +14,7 @@
 #include <time.h>
 #include <math.h>
 #include <pthread.h>
-#include <omp.h>
+//#include <omp.h>
 #include "tipos_cpu.h"
 #include "fastaIO_cpu.h"
 #include "kmer_cpu.h"
@@ -301,7 +301,7 @@ void memoryUsage(int k, int chunkSize, int n_sequence)
         int sequence_length = 300;
         for (int i = 0; i < chunkSize; i++)
         {
-            counter_vector += (sequence_length - x +1) * ((character) + character );
+            counter_vector += (sequence_length - x +1) * ((character * k) + character );
         }
         size_t each_chunk_size = data_vector + length_vector + start_vector + counter_vector;
 //    printf("Size of a Chunk: %d\n", each_chunk_size);
@@ -312,7 +312,7 @@ void memoryUsage(int k, int chunkSize, int n_sequence)
         counter_vector = 0;
         for (int i = 0; i < remaining_sequences; i++)
         {
-            counter_vector += (sequence_length - x +1) * ((character) + character);
+            counter_vector += (sequence_length - x +1) * ((character * k) + character);
         }
         size_t remaining_chunk_size = data_vector + length_vector + start_vector + counter_vector;
 //    printf("Remaining Sequences: %d\n", remaining_sequences);
@@ -365,20 +365,21 @@ int main(int argc, char *argv[])
         k = 2;
     }
 
-    printf("Usage:\n> dataset: %s\n> file_out: %s\n> k: %d\n> nt: %d\n> chunkSize: %d\n", dataset, file_out, k, nt, (int) chunkSize);
+//    printf("Usage:\n> dataset: %s\n> file_out: %s\n> k: %d\n> nt: %d\n> chunkSize: %d\n", dataset, file_out, k, nt, (int) chunkSize);
 //    omp_set_num_threads(nt);
     /*
        (!) LEITURA DE SEQUÊNCIAS (FASTA)
     */
     struct read *rd;
     double st = time(NULL);
-    puts("\t... Reading sequences ...");
+//    puts("\t... Reading sequences ...");
     rd = (struct read *) malloc( sizeof(struct read));
     struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
 
     double et = time(NULL);
-    printf("> Reading time: %1f\n", (et - st));
-    printf("> nS: %ld, nN: %ld\n", gnS, gnN);
+//    printf("> Reading time: %1f\n", (et - st));
+    printf("%d,%d,%.4f,", k, nt, (et - st));
+//    printf("> nS: %ld, nN: %ld\n", gnS, gnN);
 //    for (int x = 1; x <= 300; x++)
 //    {
 //        memoryUsage(x, chunkSize, gnS);
@@ -387,7 +388,7 @@ int main(int argc, char *argv[])
        (!) DIVIDINDO OS DADOS EM CHUNKS
     */
     int nChunk = floor(gnS / chunkSize);
-    printf("> nChunk: %d\n", nChunk);
+//    printf("> nChunk: %d\n", nChunk);
     int i = 0;
 
     chunk = (struct read *) malloc(nChunk * sizeof(struct read));
@@ -398,20 +399,23 @@ int main(int argc, char *argv[])
     SelectChunk(chunk, nChunk, rd, chunkSize, chunkSize, gnS, nS, gnN, nN);
     et = time(NULL);
 
-    printf("> Chunk Construction Time: %1f\n", (et - st));
+//    printf("> Chunk Construction Time: %1f\n", (et - st));
+    printf("%.4f,", (et - st));
 
     offset = floor(nChunk / devCount);
 //    printf("> offset: %d\n", offset);
 
 
     st = time(NULL);
+//    #pragma omp parallel for
     for (i = 0; i < nChunk; i++)
     {
 //        printf("\tkmer_main - chunk(%d)\n", i);
         kmer_main(&chunk[i], nN[i], nS[i], k);
     }
     et = time(NULL);
-    printf("> Processing Time: %1f\n", (et - st));
+//    printf("> Processing Time: %1f\n", (et - st));
+    printf("%.4f,", (et - st));
 
     int chunkRemain = abs(gnS - (nChunk * chunkSize));
     lint rnS, rnN;
@@ -424,13 +428,19 @@ int main(int argc, char *argv[])
         st = time(NULL);
         kmer_main(chunk_remain, rnN, rnS, k);
         et = time(NULL);
-        printf("> Remain Processing Time: %1f\n", (et - st));
+//        printf("> Remain Processing Time: %1f\n", (et - st));
+        printf("%.4f,", (et - st));
+    }
+    else
+    {
+        printf("%.4f", 0.0);
     }
 
     st = time(NULL);
     PrintFreq(seq, chunk, nChunk, chunkSize, chunk_remain, rnS);
     et = time(NULL);
-    printf("> Writing time: %1f\n", (et - st));
+//    printf("> Writing time: %1f\n", (et - st));
+    printf("%.4f\n", (et - st));
     free(rd);
     free(nS);
     free(nN);
