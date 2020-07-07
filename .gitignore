@@ -1,3 +1,6 @@
 /.idea
-/bin/!.keep
 /bin/*
+!/bin/seq1.fasta
+!/bin/seq2.fasta
+!/bin/out-seq1.cfrk
+!/bin/out-seq2.cfrk
