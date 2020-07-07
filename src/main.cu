@@ -31,7 +31,7 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
    char str[256];
    lint fourk = pow(4,k);
 
-   //out = fopen(file_out, "w");
+   out = fopen(file_out, "w");
 
    for (int j = 0; j < nChunk; j++)
    {
@@ -43,22 +43,22 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
          {
             cont = 0;
             //sprintf(str, "%s", seq[cont_seq].header);
-            printf("\n");
-            //fprintf(out, "\n");
+            // printf("\n");
+            fprintf(out, "\n");
             // printf("%s", seq[cont_seq].header);
             cont_seq++;
          }
          //if (pchunk[j].Freq[i] != 0)
          //{
             sprintf(str, "%d:%d ", cont, pchunk[j].Freq[i]);
-            printf("%s", str);
-            //fprintf(out, str);
+            // printf("%s", str);
+            fprintf(out, str);
          //}
          cont++;
       }
       //fprintf(out, "\n");
    }
-   //fclose(out);
+   fclose(out);
 }
 
 void DeviceInfo(uint8_t device)
