@@ -32,8 +32,8 @@ before_install:
 script:
   - cd src/
   - make
-  - cd ../sh/
-  - ./test.sh
+  # - cd ../test/
+  # - ./test.sh
 
 notifications:
   slack: tcc2020hpc:lI98TYnGx2MgaxNduRzRo7BT
