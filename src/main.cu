@@ -52,7 +52,7 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
          //{
             sprintf(str, "%d:%d ", cont, pchunk[j].Freq[i]);
             // printf("%s", str);
-            fprintf(out, str);
+            fprintf(out, "%s", str);
          //}
          cont++;
       }
@@ -280,7 +280,7 @@ int main(int argc, char* argv[])
 
    for (i = 0; i < devCount; i++)
    {
-      pthread_create(&threads[i], NULL, LaunchKmer, (void*)i);
+      pthread_create(&threads[i], NULL, LaunchKmer, (void*)(intptr_t)i);
    }
 
    for (i = 0; i < devCount; i++)

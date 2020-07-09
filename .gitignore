@@ -1,7 +1,6 @@
 /.idea
 /bin/*
-!/bin/seq1.fasta
-!/bin/seq2.fasta
-!/bin/out-seq1.cfrk
-!/bin/out-seq2.cfrk
-!/bin/out.cfrk
+/test/*
+!/test/out-seq1.cfrk
+!/test/out-seq2.cfrk
+!/test/test.sh
