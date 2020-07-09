@@ -18,7 +18,7 @@ void ComputeFreq(struct read *rd, int k, int idx, lint nN)
     int end = rd->start[idx] + (rd->length[idx] + 1);
 
 
-    int *index = (int *) malloc(sizeof(int) * k);
+    lint *index = (lint *) malloc(sizeof(lint) * k);
     for (int i = rd->start[idx]; i < end; i++)
     {
         index[0] = -1;
@@ -26,7 +26,7 @@ void ComputeFreq(struct read *rd, int k, int idx, lint nN)
         {
             for (lint c = 0; c < k; c++)
             {
-                int nuc = rd->data[c + i];
+                lint nuc = rd->data[c + i];
 
                 if (nuc != -1) //Verifica se ha alguem que nao deve ser processado
                 {

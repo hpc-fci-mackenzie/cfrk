@@ -14,7 +14,7 @@
 #include <time.h>
 #include <math.h>
 #include <pthread.h>
-//#include <omp.h>
+#include <omp.h>
 #include "tipos_cpu.h"
 #include "fastaIO_cpu.h"
 #include "kmer_cpu.h"
@@ -366,7 +366,7 @@ int main(int argc, char *argv[])
     }
 
 //    printf("Usage:\n> dataset: %s\n> file_out: %s\n> k: %d\n> nt: %d\n> chunkSize: %d\n", dataset, file_out, k, nt, (int) chunkSize);
-//    omp_set_num_threads(nt);
+    omp_set_num_threads(nt);
     /*
        (!) LEITURA DE SEQUÊNCIAS (FASTA)
     */
@@ -437,7 +437,7 @@ int main(int argc, char *argv[])
     }
 
     st = time(NULL);
-    PrintFreq(seq, chunk, nChunk, chunkSize, chunk_remain, rnS);
+//    PrintFreq(seq, chunk, nChunk, chunkSize, chunk_remain, rnS);
     et = time(NULL);
 //    printf("> Writing time: %1f\n", (et - st));
     printf("%.4f\n", (et - st));
