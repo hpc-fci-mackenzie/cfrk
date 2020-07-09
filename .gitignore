@@ -1,5 +1,6 @@
 /.idea
 /bin/*
+!/bin/.keep
 /test/*
 !/test/out-seq1.cfrk
 !/test/out-seq2.cfrk
