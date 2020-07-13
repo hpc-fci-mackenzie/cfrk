@@ -1,6 +1,7 @@
 import numpy as np
 
-def FreqMatrix(filename, k):
+
+def freq_matrix(filename, k):
     f = open(filename)
     f = f.readlines()
     m_count = np.zeros((len(f), 4**k))
@@ -11,14 +12,14 @@ def FreqMatrix(filename, k):
             m_count[j][int(index)] = int(value)
     return m_count
 
-for k in range(1, 7):
 
-    matheus = FreqMatrix(f"./cpu_SRR11510555_output_k{k}_t1.txt", k)
+def main(args):
+    file_1, file_2, k = args
+    result_1, result_2 = freq_matrix(file_1, int(k)), freq_matrix(file_2, int(k))
+    diff = result_1 - result_2
+    return len(diff.nonzero()[0]) == 0
 
-    fabricio = FreqMatrix(f"./gpu_SRR115510555_1_teste{k}.txt", k)
 
-# print(fabricio)
-# print(matheus)
-    diff = fabricio-matheus
-    print(len(diff.nonzero()[0]) == 0)
-    # print(len(diff.nonzero()[0]))
+if __name__ == '__main__':
+    import sys
+    print(main(sys.argv[1:]))

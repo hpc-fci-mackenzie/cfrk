@@ -21,7 +21,7 @@ clean:
 PROJ_DIR=$(patsubst %/src/,%, $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 SRC_DIR=$(PROJ_DIR)/src
 BIN_DIR=$(PROJ_DIR)/bin
-OUTPUT=cfrk-cpu.out
+OUTPUT=cfrk-cpu
 #OUTPUT=crfk-cpu.exe
 
 # Dependências para os TARGETS

@@ -30,7 +30,7 @@ struct counter
 {
 //    char **index;
 //    char *frequency;
-    lint **index;
+    lint *kmer;
     char *frequency;
 };
 

@@ -1,21 +1,34 @@
 import subprocess
 
-command = '/home/mferreira/repos/cfrk/bin/cfrk-cpu.out'
-input_file = 'seq1.fasta'
-output_file = 'cpu_seq1_output.txt'
 
-with open('execute_results.csv', 'w') as f:
-    f.write('K,THREAD,READ_TIME,CONSTRUCTION_TIME,PROCESSING_TIME,REMAIN_PROCESSING_TIME\n')
+def warm_up(command, input_file, output_file, k, max_threads):
+    process = subprocess.Popen([command, input_file, output_file, str(k), str(max_threads)],
+                               stdout=subprocess.PIPE)
+    subprocess.Popen(['rm', output_file])
+
+
+def run_tests(command, input_file, output_file, k, max_threads):
     out_str = ''
-    for k in range(1, 300):
-        for t in range(1, 5):
-            # output_file = f'cpu_SRR11510555_output_k{k}_t{t}.txt'
-            process = subprocess.Popen([command, input_file, output_file, str(k), str(t)],
-                             stdout= subprocess.PIPE)
-            out, err = process.communicate()
-            if err: print(err)
-            # f.write(out.decode("utf-8"))
-            out_str += out.decode("utf-8")
-    f.write(out_str)
-    f.close()
-print("Finished")
+    for t in range(1, (max_threads + 1)):
+        process = subprocess.Popen([command, input_file, output_file + f'_{t}.txt', str(k), str(t)],
+                                   stdout=subprocess.PIPE)
+        out, err = process.communicate()
+        if err:
+            print(err)
+        out_str += out.decode("utf-8")
+    return out_str
+
+
+def main(args):
+    with open('execute_results.csv', 'w') as f:
+        f.write('K,THREAD,READ_TIME,CONSTRUCTION_TIME,PROCESSING_TIME,REMAIN_PROCESSING_TIME\n')
+        command, input_file, max_k, max_threads = args
+        for k in range(1, int(max_k) + 1):
+            warm_up(command, input_file, f'warm_up_result.txt', int(k), int(max_threads))
+            f.write(run_tests(command, input_file, f'../results/{k}k', int(k), int(max_threads)))
+        f.close()
+
+
+if __name__ == '__main__':
+    import sys
+    print(main(sys.argv[1:]))

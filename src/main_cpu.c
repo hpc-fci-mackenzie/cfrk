@@ -29,16 +29,10 @@ int device;
 int k;
 char file_out[FILENAME_LENGTH];
 
-void PrintFreqCSV(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
+void PrintFreqCSV(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize, struct read *rchunk, lint rChunkSize)
 {
     FILE *out;
-    int cont = 0;
-    int cont_seq = 0;
-    char *str = (char *) calloc(32, sizeof(char));
-    lint fourk = pow(4, k);
-
     out = fopen(file_out, "w");
-    char *index = (char *) malloc(sizeof(char) * k);
     int start = 0;
     int end = offset;
     fprintf(out, "CHUNK,SEQUENCE,INDEX,FREQUENCY\n");
@@ -50,12 +44,18 @@ void PrintFreqCSV(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSi
             {
                 if (pchunk[j].counter[i].frequency[w] != 0)
                 {
-                    for (int c = 0; c < k; c++)
-                    {
-                        index[c] = pchunk[j].counter[i].index[w][c] + 48;
-                    }
-                    fprintf(out, "%d,%d,%s,%d\n", j, i, index, pchunk[j].counter[i].frequency[w]);
+                    fprintf(out, "%d,%ld,%ld,%d\n", end, i, pchunk[j].counter[i].kmer[w], pchunk[j].counter[i].frequency[w]);
                 }
+            }
+        }
+    }
+    for (lint i = 0; i < (rChunkSize); i++)
+    {
+        for (int w = 0; w < (rchunk->length[i] - k + 1); w++)
+        {
+            if (rchunk->counter[i].frequency[w] != 0)
+            {
+                fprintf(out, "%d,%ld,%ld,%d\n", end, i, rchunk->counter[i].kmer[w], rchunk->counter[i].frequency[w]);
             }
         }
     }
@@ -75,7 +75,7 @@ void OrderedPrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chu
         for (lint i = 0; i < (chunkSize); i++)
         {
             int n_combination = (pchunk[j].length[i] - k + 1);
-            int *line_index = (int *) malloc(fourk * sizeof(int));
+            lint *line_index = (lint *) malloc(fourk * sizeof(lint));
             int *line_frequency = (int *) malloc(fourk * sizeof(int));
             #pragma omp parallel for
             for (int t = 0; t < fourk; t++)
@@ -87,34 +87,22 @@ void OrderedPrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chu
             {
                 if (pchunk[j].counter[i].frequency[w] != 0)
                 {
-                    int index = 0;
-                    for (int c = 0; c < k; c++)
-                    {
-                        index += pchunk[j].counter[i].index[w][c] * pow(4, (k - 1) - c);
-                    }
-                    line_index[index] = index;
-                    line_frequency[index] = pchunk[j].counter[i].frequency[w];
+                    line_index[pchunk[j].counter[i].kmer[w]] = pchunk[j].counter[i].kmer[w];
+                    line_frequency[pchunk[j].counter[i].kmer[w]] = pchunk[j].counter[i].frequency[w];
                 }
-            }
-            char *str = (char *) malloc(32 * sizeof(char));
-            #pragma omp parallel for
-            for (int z = 0; z < 32; z++)
-            {
-                str[z] = 0;
             }
             for (int w = 0; w < fourk; w++)
             {
                 if (line_index[w] > -1)
                 {
-                    fprintf(out, "%d:%d ", line_index[w], line_frequency[w]);
+                    fprintf(out, "%ld:%d ", line_index[w], line_frequency[w]);
                 }
                 else
                 {
-                    fprintf(out, "%d:%d ", w, 0);
+                    fprintf(out, "%ld:%d ", (lint) w, 0);
                 }
             }
             fprintf(out, "\t\t\t\t\n");
-            free(str);
         }
     }
     // Remain sequences
@@ -123,7 +111,7 @@ void OrderedPrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chu
         for (lint i = 0; i < (rChunkSize); i++)
         {
             int n_combination = (rchunk->length[i] - k + 1);
-            int *line_index = (int *) malloc(fourk * sizeof(int));
+            lint *line_index = (lint *) malloc(fourk * sizeof(lint));
             int *line_frequency = (int *) malloc(fourk * sizeof(int));
             #pragma omp parallel for
             for (int t = 0; t < fourk; t++)
@@ -135,34 +123,22 @@ void OrderedPrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chu
             {
                 if (rchunk->counter[i].frequency[w] != 0)
                 {
-                    int index = 0;
-                    for (int c = 0; c < k; c++)
-                    {
-                        index += rchunk->counter[i].index[w][c] * pow(4, (k - 1) - c);
-                    }
-                    line_index[index] = index;
-                    line_frequency[index] = rchunk->counter[i].frequency[w];
+                    line_index[rchunk->counter[i].kmer[w]] = rchunk->counter[i].kmer[w];
+                    line_frequency[rchunk->counter[i].kmer[w]] = rchunk->counter[i].frequency[w];
                 }
-            }
-            char *str = (char *) malloc(32 * sizeof(char));
-            #pragma omp parallel for
-            for (int z = 0; z < 32; z++)
-            {
-                str[z] = 0;
             }
             for (int w = 0; w < fourk; w++)
             {
                 if (line_index[w] > -1)
                 {
-                    fprintf(out, "%d:%d ", line_index[w], line_frequency[w]);
+                    fprintf(out, "%ld:%d ", line_index[w], line_frequency[w]);
                 }
                 else
                 {
-                    fprintf(out, "%d:%d ", w, 0);
+                    fprintf(out, "%ld:%d ", (lint) w, 0);
                 }
             }
             fprintf(out, "\t\t\t\t\n");
-            free(str);
         }
     }
     fclose(out);
@@ -171,7 +147,6 @@ void OrderedPrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chu
 void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize, struct read *rchunk, lint rChunkSize)
 {
     FILE *out;
-    lint fourk = pow(4, k);
     out = fopen(file_out, "w");
     int start = 0;
     int end = nChunk;
@@ -185,12 +160,7 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize,
             {
                 if (pchunk[j].counter[i].frequency[w] != 0)
                 {
-                    int index = 0;
-                    for (int c = 0; c < k; c++)
-                    {
-                        index += pchunk[j].counter[i].index[w][c] * pow(4, (k - 1) - c);
-                    }
-                    fprintf(out, "%d:%d ", index, pchunk[j].counter[i].frequency[w]);
+                    fprintf(out, "%ld:%d ", pchunk[j].counter[i].kmer[w], pchunk[j].counter[i].frequency[w]);
                 }
             }
             fprintf(out, "\t\t\t\t\n");
@@ -206,12 +176,7 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize,
             {
                 if (rchunk->counter[i].frequency[w] != 0)
                 {
-                    int index = 0;
-                    for (int c = 0; c < k; c++)
-                    {
-                        index += rchunk->counter[i].index[w][c] * pow(4, (k - 1) - c);
-                    }
-                    fprintf(out, "%d:%d ", index, rchunk->counter[i].frequency[w]);
+                    fprintf(out, "%ld:%d ", rchunk->counter[i].kmer[w], rchunk->counter[i].frequency[w]);
                 }
             }
             fprintf(out, "\t\t\t\t\n");
@@ -369,7 +334,7 @@ void memoryUsage(int k, int chunkSize, int n_sequence)
         size_t remaining_chunk_size = data_vector + length_vector + start_vector + counter_vector;
 //    printf("Remaining Sequences: %d\n", remaining_sequences);
 //    printf("Remaining Sequences Size: %d\n", remaining_chunk_size);
-        fprintf(out, "%d,%d\n", x, remaining_chunk_size + (nChunk * each_chunk_size));
+        fprintf(out, "%d,%ld\n", x, remaining_chunk_size + (nChunk * each_chunk_size));
     }
     fclose(out);
 }
