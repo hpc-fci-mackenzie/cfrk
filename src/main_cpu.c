@@ -62,7 +62,7 @@ void PrintFreqCSV(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSi
     fclose(out);
 }
 
-void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize, struct read *rchunk, lint rChunkSize)
+void OrderedPrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize, struct read *rchunk, lint rChunkSize)
 {
     FILE *out;
     lint fourk = pow(4, k);
@@ -163,6 +163,58 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize,
             }
             fprintf(out, "\t\t\t\t\n");
             free(str);
+        }
+    }
+    fclose(out);
+}
+
+void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize, struct read *rchunk, lint rChunkSize)
+{
+    FILE *out;
+    lint fourk = pow(4, k);
+    out = fopen(file_out, "w");
+    int start = 0;
+    int end = nChunk;
+    // Same size Chunks
+    for (int j = start; j < end; j++)
+    {
+        for (lint i = 0; i < (chunkSize); i++)
+        {
+            int n_combination = (pchunk[j].length[i] - k + 1);
+            for (int w = 0; w < n_combination; w++)
+            {
+                if (pchunk[j].counter[i].frequency[w] != 0)
+                {
+                    int index = 0;
+                    for (int c = 0; c < k; c++)
+                    {
+                        index += pchunk[j].counter[i].index[w][c] * pow(4, (k - 1) - c);
+                    }
+                    fprintf(out, "%d:%d ", index, pchunk[j].counter[i].frequency[w]);
+                }
+            }
+            fprintf(out, "\t\t\t\t\n");
+        }
+    }
+    // Remain sequences
+    if (rChunkSize > 0)
+    {
+        for (lint i = 0; i < (rChunkSize); i++)
+        {
+            int n_combination = (rchunk->length[i] - k + 1);
+            for (int w = 0; w < n_combination; w++)
+            {
+                if (rchunk->counter[i].frequency[w] != 0)
+                {
+                    int index = 0;
+                    for (int c = 0; c < k; c++)
+                    {
+                        index += rchunk->counter[i].index[w][c] * pow(4, (k - 1) - c);
+                    }
+                    fprintf(out, "%d:%d ", index, rchunk->counter[i].frequency[w]);
+                }
+            }
+            fprintf(out, "\t\t\t\t\n");
         }
     }
     fclose(out);
@@ -437,7 +489,7 @@ int main(int argc, char *argv[])
     }
 
     st = time(NULL);
-//    PrintFreq(seq, chunk, nChunk, chunkSize, chunk_remain, rnS);
+    PrintFreq(seq, chunk, nChunk, chunkSize, chunk_remain, rnS);
     et = time(NULL);
 //    printf("> Writing time: %1f\n", (et - st));
     printf("%.4f\n", (et - st));
