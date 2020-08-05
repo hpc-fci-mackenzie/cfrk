@@ -6,6 +6,7 @@
    Fabrício Gomes Vilasboas (LNCC | Laboratório Nacional de Computação Científica)
 */
 #define NUM_THREADS 1
+#define BILLION  1000000000.0
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -342,6 +343,8 @@ void memoryUsage(int k, int chunkSize, int n_sequence)
 int main(int argc, char *argv[])
 {
     lint gnN, gnS, chunkSize = 8192;
+    struct timespec start, end;
+
     int devCount = 1;
     int nt = 4;
     char dataset[FILENAME_LENGTH] = {0};
@@ -388,14 +391,15 @@ int main(int argc, char *argv[])
        (!) LEITURA DE SEQUÊNCIAS (FASTA)
     */
     struct read *rd;
-    double st = time(NULL);
+    clock_gettime(CLOCK_REALTIME, &start);
 //    puts("\t... Reading sequences ...");
     rd = (struct read *) malloc( sizeof(struct read));
     struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
 
-    double et = time(NULL);
+    clock_gettime(CLOCK_REALTIME, &end);
 //    printf("> Reading time: %1f\n", (et - st));
-    printf("%d,%d,%.4f,", k, nt, (et - st));
+    printf("%d,%d,%.10f,", k, nt, (end.tv_sec - start.tv_sec) +
+                                 (end.tv_nsec - start.tv_nsec) / BILLION);
 //    printf("> nS: %ld, nN: %ld\n", gnS, gnN);
 //    for (int x = 1; x <= 300; x++)
 //    {
@@ -412,27 +416,29 @@ int main(int argc, char *argv[])
     nS = (lint *) malloc(nChunk * sizeof(lint));
     nN = (lint *) malloc(nChunk * sizeof(lint));
 
-    st = time(NULL);
+    clock_gettime(CLOCK_REALTIME, &start);
     SelectChunk(chunk, nChunk, rd, chunkSize, chunkSize, gnS, nS, gnN, nN);
-    et = time(NULL);
+    clock_gettime(CLOCK_REALTIME, &end);
 
 //    printf("> Chunk Construction Time: %1f\n", (et - st));
-    printf("%.4f,", (et - st));
+    printf("%.10f,", (end.tv_sec - start.tv_sec) +
+                    (end.tv_nsec - start.tv_nsec) / BILLION);
 
     offset = floor(nChunk / devCount);
 //    printf("> offset: %d\n", offset);
 
 
-    st = time(NULL);
+    clock_gettime(CLOCK_REALTIME, &start);
 //    #pragma omp parallel for
     for (i = 0; i < nChunk; i++)
     {
 //        printf("\tkmer_main - chunk(%d)\n", i);
         kmer_main(&chunk[i], nN[i], nS[i], k);
     }
-    et = time(NULL);
+    clock_gettime(CLOCK_REALTIME, &end);
 //    printf("> Processing Time: %1f\n", (et - st));
-    printf("%.4f,", (et - st));
+    printf("%.10f,", (end.tv_sec - start.tv_sec) +
+                    (end.tv_nsec - start.tv_nsec) / BILLION);
 
     int chunkRemain = abs(gnS - (nChunk * chunkSize));
     lint rnS, rnN;
@@ -442,22 +448,24 @@ int main(int argc, char *argv[])
     if (chunkRemain)
     {
         chunk_remain = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN);
-        st = time(NULL);
+        clock_gettime(CLOCK_REALTIME, &start);
         kmer_main(chunk_remain, rnN, rnS, k);
-        et = time(NULL);
+        clock_gettime(CLOCK_REALTIME, &end);
 //        printf("> Remain Processing Time: %1f\n", (et - st));
-        printf("%.4f,", (et - st));
+        printf("%.10f,", (end.tv_sec - start.tv_sec) +
+                        (end.tv_nsec - start.tv_nsec) / BILLION);
     }
     else
     {
-        printf("%.4f", 0.0);
+        printf("%.10f", 0.0);
     }
 
-    st = time(NULL);
+    clock_gettime(CLOCK_REALTIME, &start);
     PrintFreq(seq, chunk, nChunk, chunkSize, chunk_remain, rnS);
-    et = time(NULL);
+    clock_gettime(CLOCK_REALTIME, &end);
 //    printf("> Writing time: %1f\n", (et - st));
-    printf("%.4f\n", (et - st));
+    printf("%.10f\n", (end.tv_sec - start.tv_sec) +
+                     (end.tv_nsec - start.tv_nsec) / BILLION);
     free(rd);
     free(nS);
     free(nN);
