@@ -16,56 +16,42 @@
 void ComputeFreq(struct read *rd, int k, int idx, lint nN)
 {
     int end = rd->start[idx] + (rd->length[idx] + 1);
-    int *index = (char *) malloc(sizeof(char) * k);
 
-    for (lint i = rd->start[idx]; i < end; i++)
+
+    lint index = -1;
+    for (int i = rd->start[idx]; i < end; i++)
     {
-        index[0] = -1;
+        index = 0;
         if (i < nN)
         {
             for (lint c = 0; c < k; c++)
             {
-                int nuc = rd->data[c + i];
+                lint nuc = rd->data[c + i];
 
                 if (nuc != -1) //Verifica se ha alguem que nao deve ser processado
                 {
-                    //printf("%d", nuc);
-                    index[c] = nuc;
+                    index += nuc * pow(4, (k - 1) - c);
                 }
                 else
                 {
-                    index[0] = -1;
+                    index = -1;
                     break;
                 }
             }
-            if (index[0] != -1)
+            if (index > -1)
             {
                 for (int j = 0; j < (rd->length[idx] - k + 1); j++)
                 {
-                    if (rd->counter[idx].index[j][0] == -1)
+                    if (rd->counter[idx].kmer[j] == -1)
                     {
-                        for (int w = 0; w < k; w++)
-                        {
-                            rd->counter[idx].index[j][w] = index[w];
-                        }
+                        rd->counter[idx].kmer[j] = index;
                         rd->counter[idx].frequency[j]++;
                         break;
                     }
-                    else
+                    else if (rd->counter[idx].kmer[j] == index)
                     {
-                        int is_equal = 1;
-                        for (int w = 0; w < k; w++)
-                        {
-                            if (rd->counter[idx].index[j][w] != index[w])
-                            {
-                                is_equal = 0;
-                            }
-                        }
-                        if (is_equal == 1)
-                        {
-                            rd->counter[idx].frequency[j]++;
-                            break;
-                        }
+                        rd->counter[idx].frequency[j]++;
+                        break;
                     }
                 }
             }

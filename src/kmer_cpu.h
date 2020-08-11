@@ -3,7 +3,7 @@
 
 #include "tipos_cpu.h"
 
-void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device);
+void kmer_main(struct read *rd, lint nN, lint nS, int k);
 
 void ComputeFreq(struct read *rd, int k, int idx, lint nN);
 

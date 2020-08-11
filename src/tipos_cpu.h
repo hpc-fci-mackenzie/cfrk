@@ -28,8 +28,10 @@ struct read// Used to read sequences
 
 struct counter
 {
-    char **index;
-    int *frequency;
+//    char **index;
+//    char *frequency;
+    lint *kmer;
+    char *frequency;
 };
 
 #endif
