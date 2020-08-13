@@ -464,7 +464,7 @@ int main(int argc, char *argv[])
     PrintFreq(seq, chunk, nChunk, chunkSize, chunk_remain, rnS);
     clock_gettime(CLOCK_REALTIME, &end);
 //    printf("> Writing time: %1f\n", (et - st));
-    printf("%.10f\n", (end.tv_sec - start.tv_sec) +
+    printf("%.10f", (end.tv_sec - start.tv_sec) +
                      (end.tv_nsec - start.tv_nsec) / BILLION);
     free(rd);
     free(nS);
