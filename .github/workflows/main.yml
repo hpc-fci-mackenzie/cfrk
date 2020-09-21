@@ -1,0 +1,12 @@
+
+on: [push]
+
+jobs:
+  job_build:
+    name: Build Application
+    runs-on: self-hosted
+    steps:
+      - name: Build binary
+        run: make src/Makefile
+        working-directory: .
+     
