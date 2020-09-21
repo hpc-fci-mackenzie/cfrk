@@ -408,8 +408,11 @@ int main(int argc, char *argv[])
     /*
        (!) DIVIDINDO OS DADOS EM CHUNKS
     */
-    int nChunk = floor(gnS / chunkSize);
+//    int nChunk = floor(gnS / chunkSize);
+    int nChunk = 1;
+    chunkSize = (lint) ceil((gnS / nChunk));
 //    printf("> nChunk: %d\n", nChunk);
+//    printf("> chunkSize: %ld\n", chunkSize);
     int i = 0;
 
     chunk = (struct read *) malloc(nChunk * sizeof(struct read));
@@ -457,7 +460,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        printf("%.10f", 0.0);
+        rnS = 0;
+        printf("%.10f,", 0.0);
     }
 
     clock_gettime(CLOCK_REALTIME, &start);
@@ -470,7 +474,7 @@ int main(int argc, char *argv[])
     free(nS);
     free(nN);
     free(chunk);
-    free(chunk_remain);
+    if (chunkRemain) free(chunk_remain);
     free(seq);
     return 0;
 }
