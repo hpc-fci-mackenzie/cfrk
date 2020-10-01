@@ -1,18 +1,27 @@
 #!/usr/bin/env bash
-S=$1
-F=$2
-K=$3
-T=$4
-rm output_files/$F.txt
-rm output_files/$F.csv
-touch $F
-echo K,THREAD,READ_TIME,CONSTRUCTION_TIME,PROCESSING_TIME,REMAIN_PROCESSING_TIME,WRITING_TIME,EXTERNAL_TIME,MEMORY_USED > $F.csv
+
+for arg in "$@"; do
+  index=$(echo "$arg" | cut -f1 -d=)
+  val=$(echo "$arg" | cut -f2 -d=)
+  case $index in
+    script) S=$val;;
+    output-file) F=$val;;
+    K) K=$val;;
+    threads) T=$val;;
+  esac
+done
+
+rm output_files/"$F".txt
+rm output_files/"$F".csv
+touch output_files/"$F".csv
+echo K,THREAD,READ_TIME,CONSTRUCTION_TIME,PROCESSING_TIME,REMAIN_PROCESSING_TIME,WRITING_TIME,EXTERNAL_TIME,MEMORY_USED > output_files/"$F".csv
 while true; do
-  ../bin/$S input_files/seq1.fasta output_files/$F.txt $K $T
+  IT=$T
+  ../bin/"$S" input_files/seq1.fasta output_files/"$F".txt "$K" "$IT" > /dev/null 2>&1
   while true; do
-      /usr/bin/time --format=",%e,%M" -o $F -a ../bin/$S input_files/seq1.fasta output_files/$F.txt $K $T >> $F
-      T=$(( T - 1 ))
-      if (( T < 1 )); then
+      /usr/bin/time --format=",%e,%M" -o output_files/"$F".csv -a ../bin/"$S" input_files/seq1.fasta output_files/"$F".txt $K $IT >> output_files/"$F".csv
+      IT=$(( IT - 1 ))
+      if (( IT < 1 )); then
         break
       fi
     done
