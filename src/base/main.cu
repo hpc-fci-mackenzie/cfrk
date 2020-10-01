@@ -28,10 +28,10 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
    FILE *out;
    int cont = 0;
    int cont_seq = 0;
-   char str[32];
+   char str[256];
    lint fourk = pow(4,k);
 
-   out = fopen(file_out, "w");
+//   out = fopen(file_out, "w");
 
    for (int j = 0; j < nChunk; j++)
    {
@@ -39,25 +39,27 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
       cont_seq = 0;
       for (int i = 0; i < (chunkSize*fourk); i++)
       {
-         if (i % fourk == 0)
+         if (i % fourk == 0 && i != 0)
          {
             cont = 0;
-            sprintf(str, "\n");
-            // printf("%s", str);
-            fwrite(str, sizeof(char), sizeof(str), out);
+            //sprintf(str, "%s", seq[cont_seq].header);
+            printf("\n");
+//            fprintf(out, "\n");
             // printf("%s", seq[cont_seq].header);
             cont_seq++;
          }
-         if (pchunk[j].Freq[i] != 0)
-         {
-            sprintf(str, "%d ", pchunk[j].Freq[i]);
-            // printf("%s", str);
-            fwrite(str, sizeof(char), sizeof(str), out);
-         }
+         //if (pchunk[j].Freq[i] != 0)
+         //{
+            sprintf(str, "%d:%d ", cont, pchunk[j].Freq[i]);
+            printf("%s", str);
+//            fprintf(out, str);
+         //}
          cont++;
       }
+       printf("\n");
+//      fprintf(out, "\n");
    }
-   fclose(out);
+//   fclose(out);
 }
 
 void DeviceInfo(uint8_t device)
@@ -211,9 +213,9 @@ void *LaunchKmer(void* threadId)
    int start = tid * offset;
    int end = start+offset;
 
-   printf("\t\ttid: %d\n", tid);
+   //printf("\t\ttid: %d\n", tid);
 
-   DeviceInfo(tid);
+   //DeviceInfo(tid);
 
    int i = 0;
    for (i = start; i < end; i++)
@@ -249,22 +251,22 @@ int main(int argc, char* argv[])
       chunkSize = atoi(argv[5]);
 
    cudaGetDeviceCount(&devCount);
-   DeviceInfo(device);
+   //DeviceInfo(device);
 
    strcpy(file_out, argv[2]);
 
-   printf("\ndataset: %s, out: %s, k: %d, chunkSize: %d\n", argv[1], file_out, k, chunkSize);
+   //printf("\ndataset: %s, out: %s, k: %d, chunkSize: %d\n", argv[1], file_out, k, chunkSize);
 
    lint st = time(NULL);
-   puts("\n\n\t\tReading seqs!!!");
+   //puts("\n\n\t\tReading seqs!!!");
    struct read *rd;
    cudaMallocHost((void**)&rd, sizeof(struct read));
    // rd = (struct read*)malloc(sizeof(struct read));
    struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
-   printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
+   //printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
    lint et = time(NULL);
 
-   printf("\n\t\tReading time: %ld\n", (et-st));
+   //printf("\n\t\tReading time: %ld\n", (et-st));
 
    int nChunk = floor(gnS/chunkSize);
    int i = 0;
@@ -279,7 +281,6 @@ int main(int argc, char* argv[])
 
    for (i = 0; i < devCount; i++)
    {
-
       pthread_create(&threads[i], NULL, LaunchKmer, (void*)i);
    }
 
@@ -300,9 +301,9 @@ int main(int argc, char* argv[])
    kmer_main(chunk_remain, rnN, rnS, k, device);
 
    // st = time(NULL);
-   // PrintFreq(seq, chunk, nChunk, chunkSize);
+   PrintFreq(seq, chunk, nChunk, chunkSize);
    // et = time(NULL);
-   // PrintFreq(seq, chunk_remain, 1, rnS);
+   PrintFreq(seq, chunk_remain, 1, rnS);
    // printf("\n\t\tWriting time: %ld\n", (et-st));
 
 return 0;

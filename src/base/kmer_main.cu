@@ -47,7 +47,7 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
    size[3] = nS * fourk * sizeof(int);// Freq and d_Freq
    size[4] = nS * sizeof(lint); // d_start
    totalsize = size[0] + size[1] + (size[2] * 2) + size[3];
-
+//printf("%d\n", totalsize);
    if (totalsize > deviceMemory)
    {
       printf("\n\n\t\t\t[Error] There is no enough space on GPU memory\n");
@@ -104,19 +104,16 @@ void kmer_main(struct read *rd, lint nN, lint nS, int k, ushort device)
 
 //************************************************
 
-
    SetMatrix<<<grid[0], block[0]>>>(d_Index, offset[0], -1, nN);
    SetMatrix<<<grid[3], block[3]>>>(d_Freq, offset[3], 0, nF);
    ComputeIndex<<<grid[0], block[0]>>>(d_Seq, d_Index, k, nN, offset[0]);
-   //ComputeFreq<<<grid[1], block[1]>>>(d_Index, d_Freq, d_start, d_length, offset[1], fourk, nS, nN);
-   ComputeFreqNew<<<grid[2],block[2]>>>(d_Index, d_Freq, d_start, d_length, offset[2], fourk, nS);
-
+   ComputeFreq<<<grid[1], block[1]>>>(d_Index, d_Freq, d_start, d_length, offset[1], fourk, nS, nN);
+//   ComputeFreqNew<<<grid[2],block[2]>>>(d_Index, d_Freq, d_start, d_length, offset[2], fourk, nS);
 
    //cudaFree(rd);
 
    if ( cudaMallocHost((void**)&rd->Freq, size[3]) != cudaSuccess) printf("\n[Error 9] %s\n", cudaGetErrorString(cudaGetLastError()));
    if ( cudaMemcpy(rd->Freq, d_Freq, size[3], cudaMemcpyDeviceToHost) != cudaSuccess) printf("\n[Error 10] %s\n", cudaGetErrorString(cudaGetLastError()));
-
 
 
 //************************************************

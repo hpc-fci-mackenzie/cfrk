@@ -10,7 +10,7 @@ typedef long int lint;
 typedef unsigned int uint;
 
 //0 disabled; 1 enable
-// const int DBG = 0;
+const int DBG = 0;
 
 struct seq
 {
