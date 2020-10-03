@@ -3,9 +3,10 @@ CFRK-MT - Contabilizador da Frequencia de Repetica de kmer (Multi GPU version)
 Developer: Fabricio Gomes Vilasboas
 Istitution: National Laboratory for Scientific Computing
 */
-
+#define BILLION  1000000000.0
 #include <stdio.h>
 #include <pthread.h>
+#include <time.h>
 #include <math.h>
 #include <stdint.h>
 #include <omp.h>
@@ -23,7 +24,7 @@ int k;
 char file_out[512];
 //************************
 
-void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
+void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize, char *mode)
 {
    FILE *out;
    int cont = 0;
@@ -31,7 +32,7 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
    char str[256];
    lint fourk = pow(4,k);
 
-//   out = fopen(file_out, "w");
+   out = fopen(file_out, mode);
 
    for (int j = 0; j < nChunk; j++)
    {
@@ -42,24 +43,18 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, int chunkSize)
          if (i % fourk == 0 && i != 0)
          {
             cont = 0;
-            //sprintf(str, "%s", seq[cont_seq].header);
-            printf("\n");
-//            fprintf(out, "\n");
-            // printf("%s", seq[cont_seq].header);
+            fprintf(out, "\t\t\t\t\n");
             cont_seq++;
          }
-         //if (pchunk[j].Freq[i] != 0)
-         //{
-            sprintf(str, "%d:%d ", cont, pchunk[j].Freq[i]);
-            printf("%s", str);
-//            fprintf(out, str);
-         //}
+         if (pchunk[j].Freq[i] > 0)
+         {
+             fprintf(out, "%d:%d ", cont, pchunk[j].Freq[i]);
+         }
          cont++;
       }
-       printf("\n");
-//      fprintf(out, "\n");
+//      fprintf(out, "\t\t\t\t\n");
    }
-//   fclose(out);
+   fclose(out);
 }
 
 void DeviceInfo(uint8_t device)
@@ -234,7 +229,8 @@ int main(int argc, char* argv[])
 {
 
    lint gnN, gnS, chunkSize = 8192;
-   int devCount;
+    struct timespec start, end;
+    int devCount;
    int nt = 12;
 
    if ( argc < 4)
@@ -258,27 +254,31 @@ int main(int argc, char* argv[])
    //printf("\ndataset: %s, out: %s, k: %d, chunkSize: %d\n", argv[1], file_out, k, chunkSize);
 
    lint st = time(NULL);
-   //puts("\n\n\t\tReading seqs!!!");
    struct read *rd;
-   cudaMallocHost((void**)&rd, sizeof(struct read));
-   // rd = (struct read*)malloc(sizeof(struct read));
-   struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
-   //printf("\nnS: %ld, nN: %ld\n", gnS, gnN);
-   lint et = time(NULL);
+    clock_gettime(CLOCK_REALTIME, &start);
 
-   //printf("\n\t\tReading time: %ld\n", (et-st));
+    cudaMallocHost((void**)&rd, sizeof(struct read));
+   struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
+
+    clock_gettime(CLOCK_REALTIME, &end);
+    printf("%d,%d,%.10f,", k, nt, (end.tv_sec - start.tv_sec) +
+                                  (end.tv_nsec - start.tv_nsec) / BILLION);
 
    int nChunk = floor(gnS/chunkSize);
    int i = 0;
    cudaMallocHost((void**)&chunk, sizeof(struct read)*nChunk);
    cudaMallocHost((void**)&nS, sizeof(lint)*nChunk);
    cudaMallocHost((void**)&nN, sizeof(lint)*nChunk);
+    clock_gettime(CLOCK_REALTIME, &start);
    SelectChunk(chunk, nChunk, rd, chunkSize, chunkSize, gnS, nS, gnN, nN, nt);
-
+    clock_gettime(CLOCK_REALTIME, &end);
+    printf("%.10f,", (end.tv_sec - start.tv_sec) +
+                     (end.tv_nsec - start.tv_nsec) / BILLION);
    device = SelectDevice(devCount);
    offset = floor(nChunk/devCount);
    pthread_t threads[devCount];
 
+    clock_gettime(CLOCK_REALTIME, &start);
    for (i = 0; i < devCount; i++)
    {
       pthread_create(&threads[i], NULL, LaunchKmer, (void*)i);
@@ -294,17 +294,26 @@ int main(int argc, char* argv[])
    {
       kmer_main(&chunk[nChunk-1], nN[nChunk-1], nS[nChunk-1], k, device);
    }
+    clock_gettime(CLOCK_REALTIME, &end);
+    printf("%.10f,", (end.tv_sec - start.tv_sec) +
+                     (end.tv_nsec - start.tv_nsec) / BILLION);
 
    int chunkRemain = abs(gnS - (nChunk*chunkSize));
    lint rnS, rnN;
+    clock_gettime(CLOCK_REALTIME, &start);
    struct read *chunk_remain = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN, nt);
    kmer_main(chunk_remain, rnN, rnS, k, device);
+    clock_gettime(CLOCK_REALTIME, &end);
+    printf("%.10f,", (end.tv_sec - start.tv_sec) +
+                     (end.tv_nsec - start.tv_nsec) / BILLION);
 
-   // st = time(NULL);
-   PrintFreq(seq, chunk, nChunk, chunkSize);
+    clock_gettime(CLOCK_REALTIME, &start);
+   PrintFreq(seq, chunk, nChunk, chunkSize, "w");
    // et = time(NULL);
-   PrintFreq(seq, chunk_remain, 1, rnS);
-   // printf("\n\t\tWriting time: %ld\n", (et-st));
+   PrintFreq(seq, chunk_remain, 1, rnS, "a");
+    clock_gettime(CLOCK_REALTIME, &end);
+    printf("%.10f", (end.tv_sec - start.tv_sec) +
+                     (end.tv_nsec - start.tv_nsec) / BILLION);
 
 return 0;
 }
