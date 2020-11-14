@@ -16,9 +16,9 @@
 #include <math.h>
 #include <pthread.h>
 #include <omp.h>
-#include "tipos_cpu.h"
-#include "fastaIO_cpu.h"
-#include "kmer_cpu.h"
+#include "tipos_cpu_pkg.h"
+#include "fastaIO_cpu_pkg.h"
+#include "kmer_cpu_pkg.h"
 
 #define FILENAME_LENGTH 512
 
@@ -145,7 +145,7 @@ void OrderedPrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chu
     fclose(out);
 }
 
-void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
+void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize, struct read *rchunk, lint rChunkSize)
 {
     FILE *out;
     out = fopen(file_out, "w");
@@ -162,6 +162,22 @@ void PrintFreq(struct seq *seq, struct read *pchunk, int nChunk, lint chunkSize)
                 if (pchunk[j].counter[i].frequency[w] != 0)
                 {
                     fprintf(out, "%ld:%d ", pchunk[j].counter[i].kmer[w], pchunk[j].counter[i].frequency[w]);
+                }
+            }
+            fprintf(out, "\t\t\t\t\n");
+        }
+    }
+    // Remain sequences
+    if (rChunkSize > 0)
+    {
+        for (lint i = 0; i < (rChunkSize); i++)
+        {
+            int n_combination = (rchunk->length[i] - k + 1);
+            for (int w = 0; w < n_combination; w++)
+            {
+                if (rchunk->counter[i].frequency[w] != 0)
+                {
+                    fprintf(out, "%ld:%d ", rchunk->counter[i].kmer[w], rchunk->counter[i].frequency[w]);
                 }
             }
             fprintf(out, "\t\t\t\t\n");
@@ -376,6 +392,7 @@ int main(int argc, char *argv[])
     */
     struct read *rd;
     clock_gettime(CLOCK_REALTIME, &start);
+//    puts("\t... Reading sequences ...");
     rd = (struct read *) malloc( sizeof(struct read));
     struct seq *seq = ReadFASTASequences(argv[1], &gnN, &gnS, rd, 1);
 
@@ -386,8 +403,8 @@ int main(int argc, char *argv[])
     /*
        (!) DIVIDINDO OS DADOS EM CHUNKS
     */
-
-    int nChunk = 1;
+    int nChunk = nt;
+//    int nChunk = 1;
     chunkSize = (lint) ceil((gnS / nChunk));
     int i = 0;
 
@@ -399,12 +416,13 @@ int main(int argc, char *argv[])
     SelectChunk(chunk, nChunk, rd, chunkSize, chunkSize, gnS, nS, gnN, nN);
     clock_gettime(CLOCK_REALTIME, &end);
 
-    printf("%.10f,", (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / BILLION);
+    printf("%.10f,", (end.tv_sec - start.tv_sec) +
+                    (end.tv_nsec - start.tv_nsec) / BILLION);
 
     offset = floor(nChunk / devCount);
 
     clock_gettime(CLOCK_REALTIME, &start);
-
+    #pragma omp parallel for
     for (i = 0; i < nChunk; i++)
     {
         kmer_main(&chunk[i], nN[i], nS[i], k);
@@ -413,28 +431,27 @@ int main(int argc, char *argv[])
     printf("%.10f,", (end.tv_sec - start.tv_sec) +
                     (end.tv_nsec - start.tv_nsec) / BILLION);
 
-//    int chunkRemain = abs(gnS - (nChunk * chunkSize));
-//    lint rnS, rnN;
-//    struct read *chunk_remain;
+    int chunkRemain = abs(gnS - (nChunk * chunkSize));
+    lint rnS, rnN;
+    struct read *chunk_remain;
 
-//    if (chunkRemain)
-//    {
-//        chunk_remain = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN);
-//        clock_gettime(CLOCK_REALTIME, &start);
-//        kmer_main(chunk_remain, rnN, rnS, k);
-//        clock_gettime(CLOCK_REALTIME, &end);
-//        printf("%.10f,", (end.tv_sec - start.tv_sec) +
-//                        (end.tv_nsec - start.tv_nsec) / BILLION);
-//    }
-//    else
-//    {
-//        rnS = 0;
-//        printf("%.10f,", 0.0);
-//    }
+    if (chunkRemain)
+    {
+        chunk_remain = SelectChunkRemain(rd, chunkSize, nChunk, chunkRemain, gnS, &rnS, gnN, &rnN);
+        clock_gettime(CLOCK_REALTIME, &start);
+        kmer_main(chunk_remain, rnN, rnS, k);
+        clock_gettime(CLOCK_REALTIME, &end);
+        printf("%.10f,", (end.tv_sec - start.tv_sec) +
+                        (end.tv_nsec - start.tv_nsec) / BILLION);
+    }
+    else
+    {
+        rnS = 0;
+        printf("%.10f,", 0.0);
+    }
 
-    printf("%.10f,", 0.0);
     clock_gettime(CLOCK_REALTIME, &start);
-    PrintFreq(seq, chunk, nChunk, chunkSize);
+    PrintFreq(seq, chunk, nChunk, chunkSize, chunk_remain, rnS);
     clock_gettime(CLOCK_REALTIME, &end);
     printf("%.10f", (end.tv_sec - start.tv_sec) +
                      (end.tv_nsec - start.tv_nsec) / BILLION);
@@ -442,7 +459,7 @@ int main(int argc, char *argv[])
     free(nS);
     free(nN);
     free(chunk);
-//    if (chunkRemain) free(chunk_remain);
+    if (chunkRemain) free(chunk_remain);
     free(seq);
     return 0;
 }
