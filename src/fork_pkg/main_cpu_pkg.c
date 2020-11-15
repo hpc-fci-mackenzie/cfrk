@@ -209,6 +209,7 @@ struct read *SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lin
     chunk->data = (char *) malloc(sizeof(char) * length);
     chunk->length = (int *) malloc(sizeof(int) * chunkSize);
     chunk->start = (lint *) malloc(sizeof(lint) * chunkSize);
+    chunk->counter = (struct counter *) malloc(sizeof(struct counter) * max);
 
     // Copy rd->data to chunk->data
     lint start = rd->start[chunkSize * it];
@@ -224,11 +225,20 @@ struct read *SelectChunkRemain(struct read *rd, ushort chunkSize, ushort it, lin
     chunk->start[0] = 0;
 
     // Copy start and length
-    for (i = 1; i < max; i++)
+    for (i = 0; i < max; i++)
     {
-        lint id = chunkSize * it + i;
-        chunk->length[i] = rd->length[id];
-        chunk->start[i] = chunk->start[i - 1] + (chunk->length[i - 1] + 1);
+        lint id = chunkSize * it + i + 1;
+        chunk->length[i+1] = rd->length[id];
+        chunk->start[i+1] = chunk->start[i] + (chunk->length[i] + 1);
+        int n_combination = chunk->length[i] - k + 1;
+        chunk->counter[i].kmer = (lint *) malloc(sizeof(lint) * n_combination);
+        chunk->counter[i].frequency = (char *) malloc(sizeof(char) * n_combination);
+        #pragma omp parallel for
+        for (int j = 0; j < n_combination; j++)
+        {
+            chunk->counter[i].kmer[j] = -1;
+            chunk->counter[i].frequency[j] = 0;
+        }
     }
 
     *nN = length;
@@ -241,6 +251,7 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
 {
     lint i, j, it;
 
+    #pragma omp parallel for
     for (it = 0; it < nChunk; it++)
     {
         lint length = 0;
@@ -261,6 +272,7 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
         chunk[it].data = (char *) malloc(length * sizeof(char));
         chunk[it].length = (int *) malloc(chunkSize * sizeof(int));
         chunk[it].start = (lint *) malloc(chunkSize * sizeof(lint));
+        chunk[it].counter = (struct counter *) malloc(sizeof(struct counter) * max);
 
         lint start = rd->start[chunkSize * it];
         lint end = start + (lint) length;
@@ -274,11 +286,19 @@ void SelectChunk(struct read *chunk, const int nChunk, struct read *rd, ushort c
         chunk[it].start[0] = 0;
 
         // Copy start and length
-        for (i = 1; i < max; i++)
+        for (i = 0; i < max; i++)
         {
-            lint id = chunkSize * it + i;
-            chunk[it].length[i] = rd->length[id];
-            chunk[it].start[i] = chunk[it].start[i - 1] + (chunk[it].length[i - 1] + 1);
+            lint id = chunkSize * it + i + 1;
+            chunk[it].length[i+1] = rd->length[id];
+            chunk[it].start[i+1] = chunk[it].start[i] + (chunk[it].length[i] + 1);
+            int n_combination = chunk[it].length[i] - k + 1;
+            chunk[it].counter[i].kmer = (lint *) malloc(sizeof(lint) * n_combination);
+            chunk[it].counter[i].frequency = (char *) malloc(sizeof(char) * n_combination);
+            for (int j = 0; j < n_combination; j++)
+            {
+                chunk[it].counter[i].kmer[j] = -1;
+                chunk[it].counter[i].frequency[j] = 0;
+            }
         }
 
         nN[it] = length;
